@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function LandingPage() {
+
+  const navigate = useNavigate();
 
 const [player1, setPlayer1] = useState();
 const [player2, setPlayer2] = useState();
@@ -211,7 +214,23 @@ setSuggestions2([]);
 
 </div>
 
-<button className="compare-btn">
+<button 
+className="compare-btn"
+onClick={() => {
+
+if(player1 && player2){
+navigate("/compare", {
+state: {
+player1: player1,
+player2: player2
+}
+});
+} else {
+alert("Please select both players first");
+}
+
+}}
+>
 Compare Players
 </button>
 

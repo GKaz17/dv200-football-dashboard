@@ -5,6 +5,7 @@ import ComparePage from "./pages/ComparePage";
 import TimelinePage from "./pages/TimelinePage";
 
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 import "./App.css";
 
@@ -21,9 +22,12 @@ function App() {
         <Route path="/timeline" element={<TimelinePage />} />
       </Routes>
 
+    <Footer />
+
     </BrowserRouter>
 
   );
 }
+
 
 export default App;
