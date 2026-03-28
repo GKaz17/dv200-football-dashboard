@@ -95,26 +95,35 @@ const pieData = {
 };
 
 /*  RADAR */
+const normalise = (value, max) => max === 0 ? 0 : (value / max) * 100;
+
+const maxValues = {
+  goals: Math.max(comparisonData.goals[0], comparisonData.goals[1]),
+  assists: Math.max(comparisonData.assists[0], comparisonData.assists[1]),
+  shots: Math.max(comparisonData.shots[0], comparisonData.shots[1]),
+  passes: Math.max(comparisonData.passes[0], comparisonData.passes[1])
+};
+
 const radarData = {
   labels: ["Goals", "Assists", "Shots", "Passes"],
   datasets: [
     {
       label: player1?.player?.name,
       data: [
-        comparisonData.goals[0],
-        comparisonData.assists[0],
-        comparisonData.shots[0],
-        comparisonData.passes[0]
-      ]
+  normalise(comparisonData.goals[0], maxValues.goals),
+  normalise(comparisonData.assists[0], maxValues.assists),
+  normalise(comparisonData.shots[0], maxValues.shots),
+  normalise(comparisonData.passes[0], maxValues.passes)
+]
     },
     {
       label: player2?.player?.name,
-      data: [
-        comparisonData.goals[1],
-        comparisonData.assists[1],
-        comparisonData.shots[1],
-        comparisonData.passes[1]
-      ]
+     data: [
+  normalise(comparisonData.goals[0], maxValues.goals),
+  normalise(comparisonData.assists[0], maxValues.assists),
+  normalise(comparisonData.shots[0], maxValues.shots),
+  normalise(comparisonData.passes[0], maxValues.passes)
+]
     }
   ]
 };

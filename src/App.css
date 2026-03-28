@@ -349,3 +349,33 @@ font-size:40px;
 font-weight:bold;
 color:#3b82f6;
 }
+
+.compare-container {
+  padding: 20px;
+  background: #f8fafc; /* LIGHT instead of dark */
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.charts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.chart {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  flex: 1 1 300px;
+}
+
+.chart:hover {
+  transform: scale(1.02);
+  transition: 0.2s;
+}
