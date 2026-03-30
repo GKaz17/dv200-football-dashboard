@@ -1,4 +1,4 @@
-// LandingPage.jsx
+// LandingPage.js
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { TbChartArrows } from "react-icons/tb";
