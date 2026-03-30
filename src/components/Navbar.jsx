@@ -43,12 +43,12 @@ function Navbar() {
           </Link>
         </li>
 
-        <li>
+        {/* <li>
           <Link to="/profile">
             <FaUser />
             <span>PROFILE</span>
           </Link>
-        </li>
+        </li> */}
 
       </ul>
 

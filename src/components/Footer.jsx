@@ -43,8 +43,8 @@ Compare Premier League players and explore stats in a simple, interactive way.
 </li>
 
 <li>
-<Link to="/about">
-<FaUser /> About
+<Link to="/timeline">
+<FaUser /> Timeline
 </Link>
 </li>
 
