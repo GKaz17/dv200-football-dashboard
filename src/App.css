@@ -67,7 +67,7 @@ h1 {
 
 /* LandingPage.css */
 
-/* ── Page ──────────────────────────────────────────────────────────────────── */
+/*  Page  */
 .landing-container {
   background: #0d1b2e;
   min-height: 100vh;
@@ -75,7 +75,7 @@ h1 {
   padding-bottom: 80px;
 }
 
-/* ── HERO ───────────────────────────────────────────────────────────────────── */
+/*  HERO  */
 /* Generous top padding — lecturer said things felt vertically squished */
 .hero {
   text-align: center;
@@ -136,9 +136,7 @@ h1 {
   line-height: 1.7;
 }
 
-/* ── SELECTION SECTION ──────────────────────────────────────────────────────
-   Outer wrapper: one shared container for both panels and the VS badge.
-   Lighter blue border addresses the lecturer's "homepage too dark" note. */
+/*  SELECTION SECTION  */
 .selection-section {
   display: flex;
   align-items: center;
@@ -156,9 +154,8 @@ h1 {
   .selection-section { margin: 0 16px 32px; }
 }
 
-/* ── PLAYER PANEL ────────────────────────────────────────────────────────────
-   Each panel takes equal width. The border uses a lighter blue as the
-   lecturer asked for more use of that colour. */
+/*  PLAYER PANEL 
+   Each panel takes equal width. */
 .player-panel {
   flex: 1;
   border: 1px solid rgba(88, 166, 255, 0.18);
@@ -185,7 +182,7 @@ h1 {
   text-transform: uppercase;
 }
 
-/* Small green "✓ Selected" tag that appears when a player is chosen */
+/* Small green " Selected" tag that appears when a player is chosen */
 .panel-selected-tag {
   font-size: 10px;
   font-weight: 600;
@@ -193,9 +190,9 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-/* ── Panel body ──────────────────────────────────────────────────────────────
+/*  Panel body 
    This is the MIDDLE GROUND between small circles and stretched big images.
-   It's a fixed-height area (220px) so the layout never jumps.
+   It's a fixed-height area so the layout never jumps.
    Empty state: silhouette placeholder matching the wireframe.
    Filled state: constrained circle photo + player details, never stretched. */
 .panel-body {
@@ -204,11 +201,10 @@ h1 {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  /* Subtle inner border to separate from the search area below */
   border-bottom: 1px solid rgba(88, 166, 255, 0.08);
 }
 
-/* ── Empty state ─────────────────────────────────────────────────────────── */
+/*  Empty state  */
 .panel-empty {
   display: flex;
   flex-direction: column;
@@ -228,7 +224,7 @@ h1 {
   letter-spacing: 0.05em;
 }
 
-/* ── Filled state ────────────────────────────────────────────────────────────
+/*  Filled state 
    Column layout: photo ring → name → club → position badge
    Everything is centred and comfortably sized — no stretching at all */
 .panel-player-info {
@@ -267,7 +263,7 @@ h1 {
   font-weight: 700;
   color: #f1f5f9;
   margin: 0;
-  /* Truncate very long names with ellipsis instead of wrapping awkwardly */
+  /* Truncates very long names with ellipsis instead of wrapping awkwardly */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -308,7 +304,7 @@ h1 {
 .badge-amber  { background: rgba(234,179,8,0.15);  color: #facc15; }
 .badge-gray   { background: rgba(148,163,184,0.15);color: #94a3b8; }
 
-/* ── Search area ─────────────────────────────────────────────────────────────
+/*  Search area 
    Sits at the bottom of each panel. position: relative is important —
    the suggestion dropdown uses position: absolute relative to this. */
 .panel-search-wrap {
@@ -353,8 +349,7 @@ h1 {
 .panel-search-btn:hover:not(:disabled) { background: #2563eb; }
 .panel-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ── Suggestion dropdown ─────────────────────────────────────────────────────
-   z-index: 30 ensures it floats above everything else on the page.
+/*  Suggestion dropdown 
    Each row shows: [photo] [name] [team — right aligned]
    The team on the right is the fix for same-name players. */
 .suggestion-list {
@@ -404,7 +399,7 @@ h1 {
   white-space: nowrap;
 }
 
-/* ── VS BADGE ────────────────────────────────────────────────────────────────
+/*  VS BADGE 
    Small filled circle between the two panels.
    align-self: flex-start + margin-top positions it roughly level with the
    middle of the panel body area, not the bottom search area. */
@@ -427,7 +422,7 @@ h1 {
   margin-bottom: 60px;
 }
 
-/* ── COMPARE BUTTON ──────────────────────────────────────────────────────────
+/*  COMPARE BUTTON 
    Full-width pill. Dimmed when not ready, bright blue when both selected. */
 .compare-action {
   max-width: 860px;
@@ -463,7 +458,7 @@ h1 {
 .compare-pill-btn:disabled { cursor: not-allowed; }
 .compare-btn-icon { font-size: 20px; }
 
-/* ── FEATURES ────────────────────────────────────────────────────────────────
+/*  FEATURES 
    Three icon+text items. No card boxes — just icon circle, bold title, text.
    border-top adds a subtle section divider. */
 .features-section {
@@ -503,7 +498,7 @@ h1 {
 .feature-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
 .feature-desc  { font-size: 13px; color: #64748b; line-height: 1.6; }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+/*  RESPONSIVE  */
 @media (max-width: 640px) {
   .selection-section { flex-direction: column; }
   .vs-badge { margin: 0 auto; align-self: auto; }
@@ -570,67 +565,335 @@ color:white;
 
 /*comparison page*/
 
-.compare-top{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:40px;
-margin:40px 0;
-}
 
-.player-card{
-background:#1e293b;
-padding:20px;
-border-radius:16px;
-width:200px;
-text-align:center;
-}
-
-.player-card img{
-width:100px;
-border-radius:50%;
-}
-
-.chart-section{
-max-width:800px;
-margin:40px auto;
-background:#1e293b;
-padding:20px;
-border-radius:16px;
-}
-
-.vs{
-font-size:40px;
-font-weight:bold;
-color:#3b82f6;
-}
-
-.compare-container {
-  padding: 20px;
-  background: #f8fafc; /* LIGHT instead of dark */
+.compare-page {
+  background: #0d1b2e;
   min-height: 100vh;
+  color: white;
+  padding-bottom: 0; 
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-}
-
-.charts {
+/* Guard screen — shown when no players are in state */
+.compare-guard {
+  background: #0d1b2e;
+  min-height: 100vh;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 20px;
+  color: #94a3b8;
+  font-size: 15px;
 }
 
-.chart {
-  background: white;
-  padding: 20px;
+
+.compare-page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 40px 0;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.compare-page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+/* Back button — subtle, doesn't compete with the main content */
+.back-btn {
+  background: none;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.back-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+
+/*  PLAYER HEADERS 
+   Two portrait cards flanking a VS badge.
+   */
+.compare-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px 40px 48px;
+  max-width: 960px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+/* Each player header card — portrait orientation, centred content */
+.player-header-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative; /* needed for the club badge overlay */
+  width: 200px;
+  text-align: center;
+}
+
+/* Photo ring 
+   The colour changes per side: blue for P1, grey/white for P2.
+   This is the same ring technique used on the landing page. */
+.header-photo-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  padding: 3px;
+  position: relative;
+}
+
+.header-photo-ring--p1 {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.header-photo-ring--p2 {
+  background: linear-gradient(135deg, #94a3b8, #475569);
+}
+
+.header-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+  background: #0a1628;
+}
+
+/* Club badge — small logo overlaid bottom-right of the photo ring. */
+.header-club-badge {
+  position: absolute;
+  bottom: 52px; /* sits at the bottom-right of the photo ring */
+  right: 28px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  background: #1e293b;
+  border-radius: 6px;
+  padding: 2px;
+  border: 1px solid #334155;
+}
+
+/* Player name */
+.header-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.header-name--p1 { color: #3b82f6; }
+.header-name--p2 { color: #f1f5f9; }
+
+/* "Club Position" subtitle */
+.header-sub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* VS badge between the two players */
+.vs-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #c9a84c; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+  color: #0d1b2e;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+/*  CHART SECTIONS 
+   Dark card with border
+   max-width keeps charts from getting too wide on large screens. */
+.chart-section {
+  max-width: 860px;
+  margin: 0 auto 32px;
+  padding: 0 20px;
+}
+
+
+.chart-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+/* Inner dark card that wraps the actual Chart.js canvas */
+.chart-section > .chart-label + .chart-inner,
+.chart-section > .chart-label ~ .chart-inner {
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.12);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+/* Fixed height container — Chart.js needs this to render at the right size.
+   Without an explicit height, charts can grow infinitely tall. */
+.chart-inner {
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.12);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  height: 300px;
+}
+
+/* Radar needs more height to show all 6 axes comfortably */
+.chart-inner--radar {
+  height: 380px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Pie doesn't need to be wide — centred and square-ish */
+.chart-inner--pie {
+  height: 280px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+/*  STAT BARS SECTION - The optional chart
+*/
+.stat-bars-section {
+  max-width: 860px;
+  margin: 0 auto 32px;
+  padding: 0 20px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+/*  StatBar row  */
+.stat-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* The numeric values on each side */
+.stat-bar-val {
+  font-size: 18px;
+  font-weight: 800;
+  min-width: 48px;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+
+.stat-bar-val--p1 { color: #3b82f6; }
+
+
+.stat-bar-val--p2 { color: #94a3b8; text-align: right; }
+
+
+.stat-bar-val--winner { filter: brightness(1.3); }
+
+
+.stat-bar-centre {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+
+.stat-bar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+/* The bar track — full width, dark background */
+.stat-bar-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+/* The blue fill — width is set via inline style based on P1's proportion.
+   transition makes the bar animate when the page first loads. */
+.stat-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+
+/*  ACTION BUTTONS 
+  "New Comparison" and "View Timeline" */
+.compare-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 16px 20px 48px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.action-btn {
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
   border-radius: 10px;
-  flex: 1 1 300px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s, transform 0.15s;
 }
 
-.chart:hover {
-  transform: scale(1.02);
-  transition: 0.2s;
+.action-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+
+.action-btn--primary   { background: #3b82f6; color: #fff; }
+.action-btn--secondary {
+  background: #111e30;
+  border: 1px solid #334155;
+  color: #94a3b8;
+}
+
+/*  Responsive  */
+@media (max-width: 640px) {
+  .compare-page-header { padding: 24px 16px 0; }
+  .compare-top         { padding: 24px 16px 32px; gap: 16px; }
+  .player-header-card  { width: 140px; }
+  .header-photo-ring   { width: 90px; height: 90px; }
+  .header-name         { font-size: 14px; }
+  .chart-section,
+  .stat-bars-section   { padding: 0 12px; }
+  .stat-bar-row        { padding: 12px 14px; }
+  .stat-bar-val        { font-size: 15px; min-width: 36px; }
 }
