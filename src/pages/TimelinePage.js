@@ -24,14 +24,15 @@ ChartJS.register(
 
 function TimelinePage() {
 
-  //  GET DATA FROM NAV
+  //  GET DATA FROM NAVIGATION
   const location = useLocation();
   const player1 = location.state?.player1;
   const player2 = location.state?.player2;
 
-  //  STATE 
+  //  STATE (MUST BE INSIDE COMPONENT)
   const [selectedStat, setSelectedStat] = useState("goals");
 
+  // OPTIONS
   const statOptions = ["goals", "assists", "shots", "passes", "tackles"];
 
   // HELPER FUNCTION
@@ -45,7 +46,7 @@ function TimelinePage() {
     ];
   };
 
-  //EXTRACT THE STATS
+  //EXTRACT STATS
   const player1Stats = player1?.statistics?.[0];
   const player2Stats = player2?.statistics?.[0];
 
@@ -80,7 +81,10 @@ function TimelinePage() {
     ]
   };
 
-
+  //SAFETY CHECK (VERY IMPORTANT)
+  if (!player1 || !player2) {
+    return <h2>Select players first</h2>;
+  }
 
   // RENDER
   return (

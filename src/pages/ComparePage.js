@@ -1,5 +1,7 @@
 import { useLocation } from "react-router-dom";
 import PlayerCard from "../components/PlayerCard";
+import { useNavigate } from "react-router-dom";
+
 
 import {
   Chart as ChartJS,
@@ -16,6 +18,7 @@ import {
 
 import { Bar, Pie, Radar } from "react-chartjs-2";
 
+
 ChartJS.register(
   BarElement,
   CategoryScale,
@@ -31,6 +34,7 @@ ChartJS.register(
 function ComparePage() {
 
 const location = useLocation();
+const navigate = useNavigate();
 
 const player1 = location.state?.player1;
 const player2 = location.state?.player2;
@@ -119,10 +123,10 @@ const radarData = {
     {
       label: player2?.player?.name,
      data: [
-  normalise(comparisonData.goals[0], maxValues.goals),
-  normalise(comparisonData.assists[0], maxValues.assists),
-  normalise(comparisonData.shots[0], maxValues.shots),
-  normalise(comparisonData.passes[0], maxValues.passes)
+  normalise(comparisonData.goals[1], maxValues.goals),
+  normalise(comparisonData.assists[1], maxValues.assists),
+  normalise(comparisonData.shots[1], maxValues.shots),
+  normalise(comparisonData.passes[1], maxValues.passes)
 ]
     }
   ]
@@ -154,7 +158,23 @@ return (
   <Pie data={pieData} />
 </div>
 
+{/* TIMELINE BUTTON */}
+<div className="comparison-actions">
+  <button>compare players</button>
+
+  <button
+    onClick={() =>
+      navigate("/timeline", {
+        state: { player1, player2 }
+      })
+    }
+  >
+    view performance timeline
+  </button>
 </div>
+
+</div>
+
 
 );
 
