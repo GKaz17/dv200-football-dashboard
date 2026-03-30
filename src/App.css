@@ -65,194 +65,449 @@ h1 {
 
 /* landing page */
 
-.landing-container{
-text-align:center;
-padding:40px;
-background:#0f172a;
-min-height:100vh;
-color:white;
+/* LandingPage.css */
+
+/* ── Page ──────────────────────────────────────────────────────────────────── */
+.landing-container {
+  background: #0d1b2e;
+  min-height: 100vh;
+  color: white;
+  padding-bottom: 80px;
 }
 
-.title{
-font-size:48px;
-font-weight:800;
-letter-spacing:2px;
-margin-bottom:10px;
+/* ── HERO ───────────────────────────────────────────────────────────────────── */
+/* Generous top padding — lecturer said things felt vertically squished */
+.hero {
+  text-align: center;
+  padding: 64px 20px 48px;
+  max-width: 680px;
+  margin: 0 auto;
 }
 
-.subtitle{
-font-size:16px;
-color:#94a3b8;
-margin-bottom:30px;
+/* "POWERED BY OPTA DATA" pill */
+.powered-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(88, 166, 255, 0.4);
+  border-radius: 99px;
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #58a6ff;
+  margin-bottom: 24px;
+  background: rgba(88, 166, 255, 0.06);
 }
 
-/* SEARCH CONTAINER */
-.search-container{
-background:#1e293b;
-padding:20px;
-border-radius:16px;
-max-width:800px;
-margin:0 auto 40px;
+.powered-icon { font-size: 11px; }
+
+/* Large bold title */
+.hero-title {
+  font-size: clamp(30px, 5.5vw, 60px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin-bottom: 20px;
 }
 
+/* "THE PL 2025" forced onto its own line */
+.hero-title-line2 { display: block; }
 
-.search-section{
-display:flex;
-justify-content:space-between;
-gap:20px;
+/* "THE PL" — blue gradient */
+.hero-the-pl {
+  background: linear-gradient(90deg, #4a90d9, #7eb8f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.search-box{
-position:relative;
-flex:1;
+/* "2025" — gold */
+.hero-2025 {
+  color: #c9a84c;
+  -webkit-text-fill-color: #c9a84c;
 }
 
-.search-box input{
-width:100%;
-padding:12px;
-border-radius:8px;
-border:none;
-outline:none;
+.hero-subtitle {
+  font-size: 15px;
+  color: #94a3b8;
+  line-height: 1.7;
 }
 
-.search-box button{
-margin-top:10px;
-padding:10px;
-width:100%;
-border:none;
-border-radius:8px;
-background:#3b82f6;
-color:white;
-cursor:pointer;
+/* ── SELECTION SECTION ──────────────────────────────────────────────────────
+   Outer wrapper: one shared container for both panels and the VS badge.
+   Lighter blue border addresses the lecturer's "homepage too dark" note. */
+.selection-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 860px;
+  margin: 0 auto 32px;
+  padding: 24px;
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 20px;
 }
 
-/* SUGGESTIONS */
-.suggestion-list{
-position:absolute;
-background:white;
-color:black;
-width:100%;
-border-radius:8px;
-margin-top:5px;
-list-style:none;
-padding:0;
-z-index:10;
+/* We need the outer padding on mobile too so the cards don't touch the edge */
+@media (max-width: 860px) {
+  .selection-section { margin: 0 16px 32px; }
 }
 
-.suggestion-list li{
-padding:10px;
-cursor:pointer;
+/* ── PLAYER PANEL ────────────────────────────────────────────────────────────
+   Each panel takes equal width. The border uses a lighter blue as the
+   lecturer asked for more use of that colour. */
+.player-panel {
+  flex: 1;
+  border: 1px solid rgba(88, 166, 255, 0.18);
+  border-radius: 14px;
+  background: #0d1b2e;
+  overflow: visible; /* allow suggestion dropdown to escape the panel */
+  display: flex;
+  flex-direction: column;
 }
 
-.suggestion-list li:hover{
-background:#e2e8f0;
+/* "PLAYER A" label row */
+.panel-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px 8px;
 }
 
-.players-container{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:40px;
-margin-top:40px;
+.panel-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
-.player-card{
-background:#1e293b;
-padding:30px;
-border-radius:16px;
-width:250px;
-min-height:350px;
-box-shadow:0 10px 25px rgba(0,0,0,0.3);
+/* Small green "✓ Selected" tag that appears when a player is chosen */
+.panel-selected-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: #22c55e;
+  letter-spacing: 0.05em;
 }
 
-.player-card:hover{
-transform:translateY(-5px);
+/* ── Panel body ──────────────────────────────────────────────────────────────
+   This is the MIDDLE GROUND between small circles and stretched big images.
+   It's a fixed-height area (220px) so the layout never jumps.
+   Empty state: silhouette placeholder matching the wireframe.
+   Filled state: constrained circle photo + player details, never stretched. */
+.panel-body {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  /* Subtle inner border to separate from the search area below */
+  border-bottom: 1px solid rgba(88, 166, 255, 0.08);
 }
 
-.player-card img{
-width:120px;
-border-radius:50%;
-margin-bottom:10px;
+/* ── Empty state ─────────────────────────────────────────────────────────── */
+.panel-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.player-card h3{
-margin:10px 0;
-font-size:1.2rem;
+/* Large faint icon — matches the wireframe silhouette treatment */
+.panel-empty-icon {
+  font-size: 72px;
+  color: rgba(88, 166, 255, 0.12);
 }
 
-.player-card p{
-margin:4px 0;
-font-size:0.9rem;
-color:#cbd5f5;
+.panel-empty-text {
+  font-size: 12px;
+  color: #475569;
+  letter-spacing: 0.05em;
 }
 
-.vs{
-font-size:40px;
-font-weight:bold;
-color:#3b82f6;
+/* ── Filled state ────────────────────────────────────────────────────────────
+   Column layout: photo ring → name → club → position badge
+   Everything is centred and comfortably sized — no stretching at all */
+.panel-player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  width: 100%;
 }
 
-/* BUTTON */
-.compare-btn{
-margin-top:40px;
-padding:15px 40px;
-font-size:18px;
-border:none;
-border-radius:10px;
-background:#22c55e;
-color:white;
-cursor:pointer;
+/* The gradient ring around the photo — gives it a premium look even at
+   small sizes. The ring is a wrapper div with padding and a gradient background.
+   The actual photo sits inside it as a child, clipped to a circle. */
+.panel-photo-ring {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, #3b82f6, #22c55e);
+  flex-shrink: 0;
 }
 
-
-/* PLACEHOLDER */
-.placeholder-img{
-width:120px;
-height:120px;
-border-radius:50%;
-background:#334155;
-margin:0 auto 10px;
+.panel-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top; /* keeps the face visible when cropping */
+  display: block;
+  background: #0a1628;  /* fallback colour if photo fails to load */
 }
 
-@keyframes shimmer{
-0%{
-background-position:-200px 0;
-}
-100%{
-background-position:200px 0;
-}
-}
-
-/* INFO SECTION */
-.info-section{
-display:flex;
-justify-content:center;
-gap:30px;
-margin-top:60px;
-flex-wrap:wrap;
+.panel-player-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+  /* Truncate very long names with ellipsis instead of wrapping awkwardly */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
-.info-card{
-background:#1e293b;
-padding:25px;
-border-radius:16px;
-width:250px;
-text-align:left;
-box-shadow:0 10px 25px rgba(0,0,0,0.3);
-transition:0.3s;
+/* Club row: small logo + club name on the same line */
+.panel-club-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.info-card:hover{
-transform:translateY(-5px);
+.panel-club-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
-.info-card h3{
-margin-bottom:10px;
+.panel-club-name {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-.info-card p{
-color:#94a3b8;
-font-size:14px;
+/* Position badge — reusing the badge classes from the global stylesheet */
+.position-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.badge-red    { background: rgba(239,68,68,0.15);  color: #f87171; }
+.badge-green  { background: rgba(34,197,94,0.15);  color: #4ade80; }
+.badge-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.badge-amber  { background: rgba(234,179,8,0.15);  color: #facc15; }
+.badge-gray   { background: rgba(148,163,184,0.15);color: #94a3b8; }
+
+/* ── Search area ─────────────────────────────────────────────────────────────
+   Sits at the bottom of each panel. position: relative is important —
+   the suggestion dropdown uses position: absolute relative to this. */
+.panel-search-wrap {
+  padding: 12px;
+  position: relative;
+}
+
+/* Input + Search button on the same row */
+.panel-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.panel-input {
+  flex: 1;
+  background: #1a2840;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #f1f5f9;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.panel-input:focus { border-color: #3b82f6; }
+.panel-input::placeholder { color: #475569; }
+
+.panel-search-btn {
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.panel-search-btn:hover:not(:disabled) { background: #2563eb; }
+.panel-search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Suggestion dropdown ─────────────────────────────────────────────────────
+   z-index: 30 ensures it floats above everything else on the page.
+   Each row shows: [photo] [name] [team — right aligned]
+   The team on the right is the fix for same-name players. */
+.suggestion-list {
+  position: absolute;
+  top: calc(100% - 8px);
+  left: 12px;
+  right: 12px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  list-style: none;
+  padding: 4px 0;
+  z-index: 30;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+}
+
+.suggestion-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.suggestion-list li:hover { background: #334155; }
+
+.suggestion-photo {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.suggestion-name {
+  font-size: 13px;
+  color: #f1f5f9;
+  flex: 1; /* takes remaining space, pushes team name to the right */
+}
+
+/* Team name pushed to far right — key for distinguishing same-name players */
+.suggestion-team {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* ── VS BADGE ────────────────────────────────────────────────────────────────
+   Small filled circle between the two panels.
+   align-self: flex-start + margin-top positions it roughly level with the
+   middle of the panel body area, not the bottom search area. */
+.vs-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1e3a5f;
+  border: 2px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #f1f5f9;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+  /* Push it up so it sits level with the panel-body centre, not the input */
+  align-self: center;
+  margin-bottom: 60px;
+}
+
+/* ── COMPARE BUTTON ──────────────────────────────────────────────────────────
+   Full-width pill. Dimmed when not ready, bright blue when both selected. */
+.compare-action {
+  max-width: 860px;
+  margin: 0 auto 80px;
+  padding: 0 20px;
+}
+
+@media (max-width: 860px) {
+  .compare-action { margin: 0 16px 80px; }
+}
+
+.compare-pill-btn {
+  width: 100%;
+  padding: 18px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #1a2840;
+  color: #475569;
+  transition: background 0.25s, color 0.25s, transform 0.15s;
+}
+
+.compare-pill-btn--active { background: #3b82f6; color: #ffffff; }
+.compare-pill-btn--active:hover { background: #2563eb; transform: translateY(-2px); }
+.compare-pill-btn:disabled { cursor: not-allowed; }
+.compare-btn-icon { font-size: 20px; }
+
+/* ── FEATURES ────────────────────────────────────────────────────────────────
+   Three icon+text items. No card boxes — just icon circle, bold title, text.
+   border-top adds a subtle section divider. */
+.features-section {
+  display: flex;
+  justify-content: center;
+  gap: 56px;
+  flex-wrap: wrap;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 56px 20px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 190px;
+  gap: 10px;
+}
+
+/* Icon inside a dark circle — matches wireframe treatment */
+.feature-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #1a2840;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: #58a6ff;
+}
+
+.feature-title { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+.feature-desc  { font-size: 13px; color: #64748b; line-height: 1.6; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .selection-section { flex-direction: column; }
+  .vs-badge { margin: 0 auto; align-self: auto; }
+  .features-section { gap: 32px; }
 }
 
 .footer{
