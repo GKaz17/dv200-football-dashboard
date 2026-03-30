@@ -897,3 +897,385 @@ color:white;
   .stat-bar-row        { padding: 12px 14px; }
   .stat-bar-val        { font-size: 15px; min-width: 36px; }
 }
+
+
+/* TimelinePage */
+
+.timeline-page {
+  background: #0d1b2e;
+  min-height: 100vh;
+  color: white;
+  padding-bottom: 0;
+}
+
+/* Guard screen — when no players in state */
+.timeline-guard {
+  background: #0d1b2e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: #94a3b8;
+  font-size: 15px;
+}
+
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 36px 40px 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.timeline-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+.season-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3b82f6;
+  margin: 0;
+}
+
+
+.timeline-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #f1f5f9;
+  margin: 0;
+  line-height: 1.1;
+}
+
+
+.timeline-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+
+.avg-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 99px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.avg-context {
+  font-size: 13px;
+  color: #64748b;
+}
+
+
+.metric-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.2);
+  border-radius: 10px;
+  padding: 8px 14px;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.metric-label {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.metric-select {
+  background: transparent;
+  border: none;
+  color: #f1f5f9;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  /* The dropdown arrow colour can't be styled cross-browser easily,
+     so we just let the native arrow show */
+}
+
+/* Dropdown options need a background or they'll be transparent in some browsers */
+.metric-select option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.chart-card {
+  max-width: 960px;
+  margin: 0 auto 28px;
+  padding: 0 40px;
+}
+
+.chart-card > .player-pills + .chart-inner,
+.chart-inner {
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.player-pills {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.player-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+/* Active states — filled background matching each player's colour */
+.player-pill--active-p1 {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.player-pill--active-p2 {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #fcd34d;
+}
+
+.player-pill--inactive {
+  background: transparent;
+  border-color: #334155;
+  color: #475569;
+}
+
+.player-pill:hover {
+  opacity: 0.85;
+}
+
+.pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pill-dot--p1 { background: #3b82f6; }
+.pill-dot--p2 { background: #f59e0b; }
+
+/* Chart canvas container — fixed height so Chart.js renders correctly.
+   Without a defined height the chart either collapses or grows infinitely. */
+.chart-inner {
+  position: relative;
+  height: 300px;
+}
+
+.comp-stats-section {
+  max-width: 960px;
+  margin: 0 auto 28px;
+  padding: 0 40px;
+}
+
+.comp-stats-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 14px;
+}
+
+
+.comp-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /*new unit of measurement unlocked*/
+  gap: 16px;
+}
+
+.comp-stat-card {
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.1);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comp-stat-title {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.comp-stat-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.comp-stat-player {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comp-stat-name {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Large number — the main value in the card */
+.comp-stat-num {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.comp-stat-num--p1 { color: #3b82f6; }
+.comp-stat-num--p2 { color: #f59e0b; }
+
+
+.comp-stat-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.comp-stat-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+/*
+   Full-width card with sparkle icon on the left and dynamic text on the right.
+   The text updates automatically when selectedStat changes. */
+.insight-card {
+  max-width: 960px;
+  margin: 0 auto 32px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #111e30;
+  border: 1px solid rgba(88, 166, 255, 0.12);
+  border-radius: 14px;
+  padding: 20px 24px;
+  max-width: calc(960px - 80px);
+  margin: 0 auto 32px;
+}
+
+/* On wider screens we want the full width constraint with side padding */
+@media (min-width: 960px) {
+  .insight-card {
+    max-width: 880px;
+  }
+}
+
+.insight-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insight-icon {
+  font-size: 20px;
+  color: #3b82f6;
+}
+
+.insight-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+
+.insight-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin: 0;
+}
+
+
+.insight-body {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+
+.timeline-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 20px 48px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.action-btn {
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.action-btn:hover { opacity: 0.85; transform: translateY(-2px); }
+.action-btn--primary   { background: #3b82f6; color: #fff; }
+.action-btn--secondary {
+  background: #111e30;
+  border: 1px solid #334155;
+  color: #94a3b8;
+}
+
+/*  RESPONSIVENESS  */
+@media (max-width: 640px) {
+  .timeline-header    { padding: 24px 16px 20px; }
+  .chart-card         { padding: 0 16px; }
+  .comp-stats-section { padding: 0 16px; }
+  .comp-stats-grid    { grid-template-columns: 1fr; }
+  .chart-inner        { height: 240px; }
+  .timeline-title     { font-size: 24px; }
+  .insight-card       { margin: 0 16px 28px; max-width: 100%; }
+}
