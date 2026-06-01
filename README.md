@@ -9,7 +9,7 @@ The project was created for a DV200 football analytics dashboard brief and is st
 Add your deployed Vercel URL here:
 
 ```text
-https://your-vercel-project-url.vercel.app
+https://dv200-football-dashboard.vercel.app/
 ```
 
 ## Features
