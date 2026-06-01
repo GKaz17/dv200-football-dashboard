@@ -2,7 +2,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 40px;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  width: 100%;
+  padding: 18px clamp(16px, 4vw, 40px);
   color: #fff;
   background: #071326;
   border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -12,9 +15,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 
   font-weight: 600;
   letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .logo span {
@@ -24,7 +29,11 @@
 .nav-links {
   display: flex;
   list-style: none;
-  gap: 60px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(24px, 5vw, 60px);
+  margin: 0;
+  padding: 0;
   color: #fff;
 }
 
@@ -36,6 +45,7 @@
   text-decoration: none;
   color: #7f8fa6;
   font-size: 12px;
+  min-width: 54px;
 }
 
 .nav-links a svg {
@@ -47,16 +57,111 @@
   color: #3b82f6;
 }
 
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(88, 166, 255, 0.22);
+  border-radius: 10px;
+  background: #0d1b2e;
+  color: #f1f5f9;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.nav-toggle:hover {
+  border-color: #3b82f6;
+  color: #58a6ff;
+}
+
 .nav-actions {
   display: flex;
   gap: 20px;
   font-size: 18px;
   color: #7f8fa6;
+  flex-shrink: 0;
 }
 
 .nav-actions svg:hover {
   color: #3b82f6;
   cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .navbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    justify-content: initial;
+    padding: 14px 16px 12px;
+    gap: 0 16px;
+  }
+
+  .nav-toggle {
+    display: inline-flex;
+    justify-self: end;
+  }
+
+  .nav-links {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-height: 0;
+    margin-top: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0 solid rgba(88, 166, 255, 0.16);
+    border-radius: 12px;
+    background: #0d1b2e;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 0.25s ease, margin-top 0.25s ease, padding 0.25s ease, opacity 0.2s ease, border-width 0.2s ease;
+  }
+
+  .navbar--open .nav-links {
+    max-height: 260px;
+    margin-top: 12px;
+    padding: 8px;
+    border-width: 1px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links li {
+    width: 100%;
+  }
+
+  .nav-links a {
+    flex-direction: row;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .nav-links a svg {
+    margin-bottom: 0;
+  }
+
+  .nav-actions {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .logo {
+    font-size: 14px;
+  }
+
+  .nav-links a {
+    font-size: 11px;
+    min-width: 48px;
+  }
 }
 
 h1 {
@@ -71,13 +176,14 @@ h1 {
   min-height: 100vh;
   color: white;
   padding-bottom: 80px;
+  overflow-x: hidden;
 }
 
 /*  HERO  */
 /* Generous top padding — lecturer said things felt vertically squished */
 .hero {
   text-align: center;
-  padding: 64px 20px 48px;
+  padding: clamp(44px, 9vw, 64px) 20px clamp(36px, 7vw, 48px);
   max-width: 680px;
   margin: 0 auto;
 }
@@ -139,23 +245,25 @@ h1 {
   display: flex;
   align-items: center;
   gap: 16px;
-  max-width: 860px;
+  width: min(100% - 32px, 860px);
   margin: 0 auto 32px;
-  padding: 24px;
+  padding: clamp(16px, 3vw, 24px);
   background: #111e30;
   border: 1px solid rgba(88, 166, 255, 0.2);
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 /* We need the outer padding on mobile too so the cards don't touch the edge */
 @media (max-width: 860px) {
-  .selection-section { margin: 0 16px 32px; }
+  .selection-section { margin: 0 auto 32px; }
 }
 
 /*  PLAYER PANEL 
    Each panel takes equal width. */
 .player-panel {
   flex: 1;
+  width: 100%;
+  min-width: 0;
   border: 1px solid rgba(88, 166, 255, 0.18);
   border-radius: 14px;
   background: #0d1b2e;
@@ -194,7 +302,7 @@ h1 {
    Empty state: silhouette placeholder matching the wireframe.
    Filled state: constrained circle photo + player details, never stretched. */
 .panel-body {
-  min-height: 220px;
+  min-height: clamp(180px, 44vw, 220px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -318,6 +426,7 @@ h1 {
 
 .panel-input {
   flex: 1;
+  min-width: 0;
   background: #1a2840;
   border: 1px solid rgba(88, 166, 255, 0.2);
   border-radius: 8px;
@@ -332,6 +441,7 @@ h1 {
 .panel-input::placeholder { color: #475569; }
 
 .panel-search-btn {
+  flex: 0 0 auto;
   background: #3b82f6;
   border: none;
   border-radius: 8px;
@@ -388,12 +498,19 @@ h1 {
   font-size: 13px;
   color: #f1f5f9;
   flex: 1; /* takes remaining space, pushes team name to the right */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Team name pushed to far right — key for distinguishing same-name players */
 .suggestion-team {
   font-size: 11px;
   color: #64748b;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -401,7 +518,7 @@ h1 {
    Small filled circle between the two panels.
    align-self: flex-start + margin-top positions it roughly level with the
    middle of the panel body area, not the bottom search area. */
-.vs-badge {
+.landing-container .vs-badge {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -423,13 +540,13 @@ h1 {
 /*  COMPARE BUTTON 
    Full-width pill. Dimmed when not ready, bright blue when both selected. */
 .compare-action {
-  max-width: 860px;
+  width: min(100% - 32px, 860px);
   margin: 0 auto 80px;
-  padding: 0 20px;
+  padding: 0;
 }
 
 @media (max-width: 860px) {
-  .compare-action { margin: 0 16px 80px; }
+  .compare-action { margin: 0 auto 80px; }
 }
 
 .compare-pill-btn {
@@ -499,8 +616,47 @@ h1 {
 /*  RESPONSIVE  */
 @media (max-width: 640px) {
   .selection-section { flex-direction: column; }
-  .vs-badge { margin: 0 auto; align-self: auto; }
+  .landing-container .vs-badge { margin: 0 auto; align-self: auto; }
   .features-section { gap: 32px; }
+}
+
+@media (max-width: 420px) {
+  .hero-title {
+    line-height: 1.12;
+  }
+
+  .panel-body {
+    min-height: 170px;
+  }
+
+  .panel-input-row {
+    gap: 6px;
+  }
+
+  .panel-input,
+  .panel-search-btn {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+
+  .suggestion-list li {
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .suggestion-team {
+    max-width: 76px;
+  }
+}
+
+@media (max-width: 340px) {
+  .panel-input-row {
+    flex-direction: column;
+  }
+
+  .panel-search-btn {
+    width: 100%;
+  }
 }
 
 .footer{
@@ -561,6 +717,22 @@ gap:8px;
 color:white;
 }
 
+@media (max-width: 640px) {
+  .footer {
+    padding: 32px 20px;
+    margin-top: 48px;
+  }
+
+  .footer-container {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .footer-section {
+    min-width: 0;
+  }
+}
+
 /*comparison page*/
 
 
@@ -569,6 +741,7 @@ color:white;
   min-height: 100vh;
   color: white;
   padding-bottom: 0; 
+  overflow-x: hidden;
 }
 
 /* Guard screen — shown when no players are in state */
@@ -637,6 +810,7 @@ color:white;
   gap: 10px;
   position: relative; /* needed for the club badge overlay */
   width: 200px;
+  min-width: 0;
   text-align: center;
 }
 
@@ -688,6 +862,8 @@ color:white;
   font-size: 18px;
   font-weight: 700;
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .header-name--p1 { color: #3b82f6; }
@@ -698,6 +874,8 @@ color:white;
   font-size: 13px;
   color: #94a3b8;
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 /* VS badge between the two players */
@@ -753,6 +931,7 @@ color:white;
   padding: 24px;
   position: relative;
   height: 300px;
+  width: 100%;
 }
 
 /* Radar needs more height to show all 6 axes comfortably */
@@ -832,6 +1011,8 @@ color:white;
   letter-spacing: 0.1em;
   color: #64748b;
   text-transform: uppercase;
+  text-align: center;
+  line-height: 1.35;
 }
 
 /* The bar track — full width, dark background */
@@ -872,6 +1053,7 @@ color:white;
   cursor: pointer;
   border: none;
   transition: opacity 0.2s, transform 0.15s;
+  min-height: 44px;
 }
 
 .action-btn:hover { opacity: 0.85; transform: translateY(-2px); }
@@ -886,14 +1068,64 @@ color:white;
 /*  Responsive  */
 @media (max-width: 640px) {
   .compare-page-header { padding: 24px 16px 0; }
-  .compare-top         { padding: 24px 16px 32px; gap: 16px; }
-  .player-header-card  { width: 140px; }
+  .compare-top         { padding: 24px 12px 32px; gap: 10px; }
+  .player-header-card  { width: min(38vw, 140px); }
   .header-photo-ring   { width: 90px; height: 90px; }
   .header-name         { font-size: 14px; }
   .chart-section,
   .stat-bars-section   { padding: 0 12px; }
   .stat-bar-row        { padding: 12px 14px; }
   .stat-bar-val        { font-size: 15px; min-width: 36px; }
+  .compare-page .chart-inner         { height: 260px; padding: 16px; }
+  .compare-page .chart-inner--radar  { height: 320px; }
+  .compare-page .chart-inner--pie    { height: 240px; }
+  .compare-actions     { padding: 12px 16px 44px; }
+  .compare-actions .action-btn { flex: 1 1 100%; }
+}
+
+@media (max-width: 420px) {
+  .compare-page-title {
+    font-size: 18px;
+  }
+
+  .compare-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .player-header-card {
+    width: 100%;
+  }
+
+  .compare-page .vs-badge {
+    width: 44px;
+    height: 44px;
+    font-size: 12px;
+    margin-top: 28px;
+  }
+
+  .header-photo-ring {
+    width: 80px;
+    height: 80px;
+  }
+
+  .header-club-badge {
+    bottom: 48px;
+    right: calc(50% - 48px);
+    width: 24px;
+    height: 24px;
+  }
+
+  .stat-bar-row {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .stat-bar-val {
+    min-width: 32px;
+    font-size: 14px;
+  }
 }
 
 
@@ -904,6 +1136,7 @@ color:white;
   min-height: 100vh;
   color: white;
   padding-bottom: 0;
+  overflow-x: hidden;
 }
 
 /* Guard screen — when no players in state */
@@ -991,6 +1224,7 @@ color:white;
   padding: 8px 14px;
   align-self: flex-start;
   margin-top: 4px;
+  max-width: 100%;
 }
 
 .metric-label {
@@ -1008,6 +1242,7 @@ color:white;
   font-weight: 600;
   cursor: pointer;
   outline: none;
+  min-width: 0;
   /* The dropdown arrow colour can't be styled cross-browser easily,
      so we just let the native arrow show */
 }
@@ -1050,6 +1285,7 @@ color:white;
   cursor: pointer;
   border: 1px solid transparent;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
+  min-width: 0;
 }
 
 /* Active states — filled background matching each player's colour */
@@ -1122,6 +1358,7 @@ color:white;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
 }
 
 .comp-stat-title {
@@ -1135,17 +1372,22 @@ color:white;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 16px;
 }
 
 .comp-stat-player {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .comp-stat-name {
   font-size: 11px;
   color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Large number — the main value in the card */
@@ -1220,6 +1462,7 @@ color:white;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 
@@ -1273,7 +1516,60 @@ color:white;
   .chart-card         { padding: 0 16px; }
   .comp-stats-section { padding: 0 16px; }
   .comp-stats-grid    { grid-template-columns: 1fr; }
-  .chart-inner        { height: 240px; }
+  .timeline-page .chart-inner { height: 240px; }
   .timeline-title     { font-size: 24px; }
   .insight-card       { margin: 0 16px 28px; max-width: 100%; }
+}
+
+@media (max-width: 420px) {
+  .timeline-header {
+    align-items: stretch;
+  }
+
+  .timeline-header-left,
+  .metric-selector {
+    width: 100%;
+  }
+
+  .metric-selector {
+    justify-content: space-between;
+  }
+
+  .chart-card,
+  .comp-stats-section {
+    padding: 0 12px;
+  }
+
+  .player-pills {
+    gap: 8px;
+  }
+
+  .player-pill {
+    flex: 1 1 0;
+    justify-content: center;
+    padding: 8px 10px;
+  }
+
+  .comp-stat-card {
+    padding: 16px;
+  }
+
+  .comp-stat-num {
+    font-size: 24px;
+  }
+
+  .insight-card {
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0 12px 28px;
+    padding: 16px;
+  }
+
+  .timeline-actions {
+    padding: 0 12px 44px;
+  }
+
+  .timeline-actions .action-btn {
+    flex: 1 1 100%;
+  }
 }

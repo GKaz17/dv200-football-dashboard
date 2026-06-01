@@ -1,70 +1,179 @@
-# Getting Started with Create React App
+# PitchStats
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+PitchStats is a responsive Premier League player comparison dashboard built with React. The app lets users search for current Premier League players, compare head-to-head performance metrics, and view a season-style performance timeline through interactive charts.
+
+The project was created for a DV200 football analytics dashboard brief and is structured as a portfolio-ready frontend application.
+
+## Live Demo
+
+Add your deployed Vercel URL here:
+
+```text
+https://your-vercel-project-url.vercel.app
+```
+
+## Features
+
+- Search Premier League players using the API-SPORTS Football API.
+- Select two players and compare their core season statistics.
+- View radar, bar, pie, and line charts powered by Chart.js.
+- Compare goals, assists, shots, shot accuracy, tackles, dribbles, passes, and derived percentages.
+- Explore a simulated season timeline for selected player metrics.
+- Responsive layout with mobile-first improvements and a hamburger navigation menu.
+- Guard screens for direct visits to comparison routes without selected players.
+
+## Tech Stack
+
+- React
+- React Router
+- Chart.js
+- React Chart.js 2
+- React Icons
+- CSS
+- API-SPORTS Football API
+- Vercel
+
+## Project Structure
+
+```text
+src/
+  components/
+    Footer.jsx
+    Navbar.jsx
+    PlayerCard.jsx
+  pages/
+    LandingPage.js
+    ComparePage.js
+    TimelinePage.js
+  App.js
+  App.css
+  index.css
+
+public/
+  Logo_PitchStats.png
+  index.html
+```
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/GwizzK017/dv200-football-dashboard.git
+cd dv200-football-dashboard
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Add environment variables
+
+Create a `.env.local` file in the project root:
+
+```env
+REACT_APP_API_SPORTS_KEY=your_api_sports_key_here
+```
+
+You can use `.env.example` as a template.
+
+### 4. Run the development server
+
+```bash
+npm start
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Available Scripts
 
-In the project directory, you can run:
+```bash
+npm start
+```
 
-### `npm start`
+Runs the app locally in development mode.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```bash
+npm run build
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Creates an optimized production build in the `build/` folder.
 
-### `npm test`
+```bash
+npm test
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Starts the test runner in watch mode.
 
-### `npm run build`
+## Vercel Deployment
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+This project can be deployed through Vercel's GitHub integration.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Recommended Vercel settings:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```text
+Framework Preset: Create React App
+Build Command: npm run build
+Output Directory: build
+Install Command: npm install
+Production Branch: master
+```
 
-### `npm run eject`
+Add this environment variable in Vercel Project Settings:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```text
+REACT_APP_API_SPORTS_KEY
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Important deployment note
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Vercel deploys the latest pushed commit from the connected GitHub branch. If the deployed site still shows an old version, check that:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- The changes are committed locally.
+- The commit has been pushed to GitHub.
+- Vercel is connected to the correct repository.
+- Vercel's production branch matches the branch you pushed to, which is currently `master` for this repo.
+- The environment variable exists in Vercel, not only in `.env.local`.
 
-## Learn More
+After pushing, Vercel should automatically create a new deployment. If it does not, trigger a redeploy from the Vercel dashboard.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Data Source
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Player data is fetched from the API-SPORTS Football API:
 
-### Code Splitting
+```text
+https://v3.football.api-sports.io/players
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+The current search is configured for:
 
-### Analyzing the Bundle Size
+```text
+League: Premier League
+League ID: 39
+Season: 2024
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Current Limitations
 
-### Making a Progressive Web App
+- Timeline data is generated from season totals rather than fetched as real match-by-match history.
+- The app depends on a valid API key for player search results.
+- Direct visits to comparison pages show guard screens because selected players are stored in router state.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Future Improvements
 
-### Advanced Configuration
+- Persist selected players in local storage or URL parameters.
+- Add real fixture-by-fixture player performance data.
+- Add loading, empty, and API error states for stronger production behavior.
+- Add player profile pages with deeper statistics.
+- Add shareable comparison URLs.
+- Add automated tests for route guards and player selection.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Author
 
-### Deployment
+Gedeon Kazadi
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## License
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is for academic and portfolio use.
