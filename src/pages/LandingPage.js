@@ -6,10 +6,15 @@ import { MdOutlineTimer, MdShare } from "react-icons/md";
 import { FaStar } from "react-icons/fa";
 import { GiSoccerBall } from "react-icons/gi";
 
-const API_KEY = "52aebd1e39b84ac26ae09e2f7fc54da2";
+const API_KEY = process.env.REACT_APP_API_SPORTS_KEY;
 
 // One reusable fetch — both panels use this same function
 function fetchPlayers(query) {
+  if (!API_KEY) {
+    console.error("Missing REACT_APP_API_SPORTS_KEY in your local env file.");
+    return Promise.resolve({ response: [] });
+  }
+
   return fetch(
     `https://v3.football.api-sports.io/players?search=${encodeURIComponent(query)}&league=39&season=2024`,
     { method: "GET", headers: { "x-apisports-key": API_KEY } }

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { 
   FaHome,
   FaChartBar,
-  FaUser,
   FaShareAlt,
   FaCog
 } from "react-icons/fa";

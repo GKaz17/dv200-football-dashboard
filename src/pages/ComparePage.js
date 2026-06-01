@@ -11,7 +11,6 @@
 //   4. Bar + Pie    — the other two chart types required
 
 import { useLocation, useNavigate } from "react-router-dom";
-import Footer from "../components/Footer";
 
 import {
   Chart as ChartJS,

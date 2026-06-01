@@ -14,7 +14,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BsStars } from "react-icons/bs";
-import Footer from "../components/Footer";
 
 import {
   Chart as ChartJS,
@@ -110,6 +109,13 @@ function TimelinePage() {
   const player1 = location.state?.player1;
   const player2 = location.state?.player2;
 
+  //  State 
+  const [selectedStat, setSelectedStat] = useState("goals");
+
+  // Player visibility: controls whether each line shows on the chart.
+  // This is an object so we can toggle by player key without an index.
+  const [visible, setVisible] = useState({ p1: true, p2: true });
+
   //  GUARD — must be before any data access 
   // If someone navigates directly to the timeline without player state, we catch it here before anything tries to read from null. So the inital page will be empty like the Comparison Page.
   if (!player1 || !player2) {
@@ -122,13 +128,6 @@ function TimelinePage() {
       </div>
     );
   }
-
-  //  State 
-  const [selectedStat, setSelectedStat] = useState("goals");
-
-  // Player visibility: controls whether each line shows on the chart.
-  // This is an object so we can toggle by player key without an index.
-  const [visible, setVisible] = useState({ p1: true, p2: true });
 
   function togglePlayer(key) {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
