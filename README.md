@@ -59,7 +59,7 @@ public/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/GwizzK017/dv200-football-dashboard.git
+git clone https://github.com/GKaz17/dv200-football-dashboard.git
 cd dv200-football-dashboard
 ```
 
