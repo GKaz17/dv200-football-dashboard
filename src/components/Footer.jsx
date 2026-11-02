@@ -9,7 +9,12 @@ import {
 import { GiSoccerBall } from "react-icons/gi";
 
 
-function Footer() {
+function Footer({ onNavigate }) {
+function follow(event, target) {
+  if (onNavigate && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    event.preventDefault(); onNavigate(target);
+  }
+}
 
 return (
 
@@ -31,19 +36,19 @@ Compare Premier League players and explore stats in a simple, interactive way.
 <ul>
 
 <li>
-<Link to="/">
+<Link to="/" onClick={(event) => follow(event, "/")}>
 <FaHome /> Home
 </Link>
 </li>
 
 <li>
-<Link to="/compare">
+<Link to="/compare" onClick={(event) => follow(event, "/compare")}>
 <FaChartBar /> Compare
 </Link>
 </li>
 
 <li>
-<Link to="/timeline">
+<Link to="/timeline" onClick={(event) => follow(event, "/timeline")}>
 <FaChartBar /> Timeline
 </Link>
 </li>

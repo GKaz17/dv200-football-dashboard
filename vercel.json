@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/compare", "destination": "/index.html" },
+    { "source": "/timeline", "destination": "/index.html" }
+  ]
+}

@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { clearFootballCache, loadSeasonAvailability } from "./playerSearch";
 import TimelinePage from "./pages/TimelinePage";
 import * as matchHistory from "./matchHistory";
+import { saveSelection, SELECTION_KEY } from "./selectionStorage";
 
 jest.mock("./playerSearch", () => ({ ...jest.requireActual("./playerSearch"), loadSeasonAvailability: jest.fn() }));
 
@@ -29,6 +30,7 @@ const originalKey = process.env.REACT_APP_API_SPORTS_KEY;
 const originalFetch = global.fetch;
 
 beforeEach(() => {
+  window.localStorage.clear();
   clearFootballCache();
   loadSeasonAvailability.mockResolvedValue({ all: [{ year: 2024, coverage: { fixtures: { statistics_players: true } } }], range: null, notice: "" });
   window.history.replaceState({}, "", "/");
@@ -124,7 +126,7 @@ test("no intersection between coverage and plan gives a disabled search instead 
 test("recorded matchweek overlays load once, reuse fixtures and retain gaps", async () => {
   render(<App />);
   await selectPair();
-  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "STATS" }));
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
   const fixture = (id, week, details = false) => ({
     fixture: { id, status: { short: "FT" } }, league: { id: 39, season: 2024, round: `Regular Season - ${week}` },
     ...(details ? { players: [{ team: { id: 10 }, players: [
@@ -149,7 +151,7 @@ test("recorded matchweek overlays load once, reuse fixtures and retain gaps", as
 test("large history loads require explicit quota approval and invalid windows cannot load", async () => {
   render(<App />);
   await selectPair();
-  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "STATS" }));
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
   fireEvent.click(screen.getByLabelText("Recorded matchweeks"));
   fireEvent.change(screen.getByLabelText("To matchweek"), { target: { value: "38" } });
   expect(screen.getByRole("button", { name: "Load match history" })).toBeDisabled();
@@ -172,6 +174,93 @@ test("an unavailable recorded series is named explicitly and is not replaced wit
   expect(chart("line").datasets[1].data).toEqual(Array(6).fill(0));
 });
 
+test("navbar comparison resolves both typed names without requiring the lower compare button", async () => {
+  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "One" ? [first] : [second]));
+  render(<App />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "COMPARE" }));
+  await screen.findByRole("heading", { name: "Player Comparison" });
+  expect(chart("bar").datasets.map((item) => item.label)).toEqual(["Player One · 2024/25", "Player Two · 2024/25"]);
+  expect(global.fetch).toHaveBeenCalledTimes(2);
+  expect(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "COMPARE" })).toHaveAttribute("aria-current", "page");
+});
+
+test("a failed navbar lookup retains both drafts and the successfully resolved player", async () => {
+  global.fetch.mockResolvedValueOnce(response([first])).mockResolvedValueOnce(response([]));
+  render(<App />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("No Player B match");
+  expect(screen.getByRole("heading", { name: "Player One" })).toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+  expect(window.location.pathname).toBe("/");
+  expect(JSON.parse(window.localStorage.getItem(SELECTION_KEY)).selection.query2).toBe("Two");
+});
+
+test("saved cross-season records survive remounts and direct timeline routes without a new lookup", () => {
+  const earlier = { ...first, selectionSeason: 2023, selectedAt: Date.now(), statistics: first.statistics.map((stats) => ({ ...stats, league: { id: 39, season: 2023 } })) };
+  const later = { ...second, selectionSeason: 2024, selectedAt: Date.now() };
+  saveSelection({ player1: earlier, player2: later, season1: 2023, season2: 2024, query1: earlier.player.name, query2: later.player.name });
+  loadSeasonAvailability.mockImplementation(() => new Promise(() => {}));
+  window.history.replaceState({}, "", "/compare");
+  const view = render(<App />);
+  expect(screen.getByRole("heading", { name: "Player Comparison" })).toBeInTheDocument();
+  expect(chart("bar").datasets[0].label).toContain("2023/24");
+  view.unmount();
+  window.history.replaceState({}, "", "/timeline");
+  render(<App />);
+  expect(screen.getByRole("heading", { name: "Simulated Season Timeline" })).toBeInTheDocument();
+  expect(chart("line").datasets[0].label).toContain("2023/24");
+  expect(global.fetch).not.toHaveBeenCalled();
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "HOME" }));
+  expect(screen.getByRole("textbox", { name: "Player A" })).toHaveValue("Player One");
+  expect(screen.getByRole("combobox", { name: "Player A season" })).toHaveValue("2023");
+});
+
+test("unselected search drafts persist and the timeline navbar can resolve them after remount", async () => {
+  const view = render(<App />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  view.unmount();
+  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "One" ? [first] : [second]));
+  render(<App />);
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
+  await screen.findByRole("heading", { name: "Simulated Season Timeline" });
+  expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(1);
+});
+
+test("clearing the comparison removes saved players and drafts", async () => {
+  const view = render(<App />);
+  await selectPair();
+  fireEvent.click(screen.getByRole("button", { name: "Clear comparison" }));
+  expect(screen.getByRole("textbox", { name: "Player A" })).toHaveValue("");
+  expect(JSON.parse(window.localStorage.getItem(SELECTION_KEY)).selection.player1).toBeNull();
+  view.unmount();
+  window.history.replaceState({}, "", "/compare");
+  loadSeasonAvailability.mockImplementation(() => new Promise(() => {}));
+  render(<App />);
+  expect(screen.getByText("Select two players to open a comparison.")).toBeInTheDocument();
+});
+
+test("choosing Home cancels a pending navbar lookup without a late redirect", async () => {
+  let resolve;
+  global.fetch.mockReturnValueOnce(new Promise((done) => { resolve = done; }));
+  render(<App />);
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  const nav = within(screen.getByRole("navigation", { name: "Primary" }));
+  fireEvent.click(nav.getByRole("link", { name: "COMPARE" }));
+  expect(screen.getByText("Finding players...")).toBeInTheDocument();
+  fireEvent.click(nav.getByRole("link", { name: "HOME" }));
+  await act(async () => resolve(response([first])));
+  expect(window.location.pathname).toBe("/");
+  expect(screen.queryByRole("heading", { name: "Player Comparison" })).not.toBeInTheDocument();
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+});
+
 test("navbar and footer navigation keep the selected pair; timeline toggles never change points", async () => {
   render(<App />);
   await selectPair();
@@ -183,7 +272,7 @@ test("navbar and footer navigation keep the selected pair; timeline toggles neve
   expect(screen.queryByTestId("pie")).not.toBeInTheDocument();
   expect(screen.getByText(/share cannot be calculated/i)).toBeInTheDocument();
 
-  fireEvent.click(nav.getByRole("link", { name: "STATS" }));
+  fireEvent.click(nav.getByRole("link", { name: "TIMELINE" }));
   const original = chart("line");
   fireEvent.click(screen.getByRole("button", { name: /Player Two/ }));
   expect(chart("line").datasets[0].data).toEqual(original.datasets[0].data);

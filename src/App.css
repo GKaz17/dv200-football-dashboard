@@ -59,6 +59,11 @@
   color: #3b82f6;
 }
 
+.nav-links a[aria-current="page"] { color: #58a6ff; }
+.nav-pending { grid-column: 1 / -1; color: #b6c4d6; font-size: 13px; }
+.navigation-feedback { width: min(calc(100% - 32px), 860px); margin: 16px auto; color: #fca5a5; font-size: 14px; line-height: 1.6; }
+.season-availability .search-retry { margin-right: 12px; }
+
 .nav-toggle {
   display: none;
   align-items: center;

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { TbChartArrows } from "react-icons/tb";
 import { MdOutlineTimer, MdBarChart } from "react-icons/md";
-import { FaStar, FaSearch, FaRedo } from "react-icons/fa";
+import { FaStar, FaSearch, FaRedo, FaTrash } from "react-icons/fa";
 import { GiSoccerBall } from "react-icons/gi";
 import { formatSeason, playerClub } from "../playerData";
 import { searchPlayers } from "../playerSearch";
@@ -15,8 +15,8 @@ import { searchPlayers } from "../playerSearch";
 //   This is the key UX fix for same-name players — you can see at a glance
 //   which "Jones" or "Silva" you're picking.
 // 
-function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, onSeasonChange, onAccessDenied, onSearchStart }) {
-  const [query, setQuery]             = useState(player?.player?.name ?? "");
+function PlayerPanel({ label, placeholder, player, onSelect, query, onQueryChange, navigationBusy,
+  season, seasons, onSeasonChange, onAccessDenied, onSearchStart }) {
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading]         = useState(false);
   const [status, setStatus]           = useState("");
@@ -36,8 +36,16 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
     clearTimeout(debounceRef.current);
     controllerRef.current?.abort();
     requestRef.current += 1;
-    setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+    setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
   }, [season]);
+
+  useEffect(() => {
+    if (!navigationBusy) return;
+    clearTimeout(debounceRef.current);
+    controllerRef.current?.abort();
+    requestRef.current += 1;
+    setLoading(false); setSuggestions([]); setStatus(""); setError(""); setNoResults(false);
+  }, [navigationBusy]);
 
   function cancelPendingSearch() {
     clearTimeout(debounceRef.current);
@@ -67,7 +75,7 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
     onSearchStart();
     const value = e.target.value;
     cancelPendingSearch();
-    setQuery(value);
+    onQueryChange(value);
     setLoading(false);
     setStatus("");
     setError("");
@@ -134,7 +142,6 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
   function pickSuggestion(p) {
     cancelPendingSearch();
     onSelect(p);
-    setQuery(p.player.name);
     setLoading(false);
     setError("");
     setStatus("");
@@ -158,9 +165,9 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
       <div className="season-field">
         <label htmlFor={`${inputId}-season`}>Season</label>
         <select id={`${inputId}-season`} aria-label={`${label} season`} value={season}
-          disabled={!seasons.length} onChange={(event) => {
+          disabled={!seasons.length || navigationBusy} onChange={(event) => {
             cancelPendingSearch();
-            setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+            setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
             onSeasonChange(Number(event.target.value));
           }}>
           {seasons.map((item) => <option key={item.year} value={item.year}>{formatSeason(item.year)}{item.current ? " (current)" : ""}</option>)}
@@ -223,7 +230,8 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
           <input
             id={inputId}
             type="text"
-            disabled={!seasons.length}
+            disabled={!seasons.length || navigationBusy}
+            maxLength={120}
             autoComplete="off"
             aria-describedby={`${inputId}-status`}
             className="panel-input"
@@ -237,7 +245,7 @@ function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, on
             className="panel-search-btn"
             aria-label={`Search ${label}`}
             onClick={handleSearch}
-            disabled={loading || !seasons.length || query.trim().length < 3}
+            disabled={loading || navigationBusy || !seasons.length || query.trim().length < 3}
           >
             <FaSearch aria-hidden="true" /> {loading ? "Searching..." : "Search"}
           </button>
@@ -293,6 +301,7 @@ function positionClass(pos) {
 // MAIN PAGE
  
 function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
+  query1, query2, onQueryChange, navigationBusy, onClearComparison,
   season1, season2, seasons, availability, seasonLoading, seasonError, onRetrySeasons,
   onSeasonChange, onAccessDenied, onSearchStart }) {
   const navigate   = useNavigate();
@@ -336,6 +345,9 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
         <button className="search-retry" type="button" onClick={onRetrySeasons} disabled={seasonLoading}>
           <FaRedo aria-hidden="true" /> Refresh seasons
         </button>
+        <button className="search-retry" type="button" onClick={onClearComparison} disabled={!player1 && !player2 && !query1 && !query2}>
+          <FaTrash aria-hidden="true" /> Clear comparison
+        </button>
       </div>
 
       {/*  PLAYER SELECTION  */}
@@ -346,6 +358,7 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
           placeholder="Search Player A (e.g. Haaland)..."
           player={player1}
           onSelect={onSelectPlayer1}
+          query={query1} onQueryChange={(value) => onQueryChange(1, value)} navigationBusy={navigationBusy}
           season={season1} seasons={seasons} onSeasonChange={(year) => onSeasonChange(1, year)}
           onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />
@@ -358,6 +371,7 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
           placeholder="Search Player B (e.g. Salah)..."
           player={player2}
           onSelect={onSelectPlayer2}
+          query={query2} onQueryChange={(value) => onQueryChange(2, value)} navigationBusy={navigationBusy}
           season={season2} seasons={seasons} onSeasonChange={(year) => onSeasonChange(2, year)}
           onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />

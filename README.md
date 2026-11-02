@@ -19,7 +19,7 @@
 
 ## About the project
 
-PitchStats helps football fans compare two Premier League players without switching between disconnected statistics pages. Users search the 2024/25 dataset, select a pair and compare recorded season totals through interactive charts. A separate timeline illustrates how those totals might build across a season; it is explicitly simulated, not recorded match history. I built the project to practise API integration, data visualisation and responsive React interfaces.
+PitchStats helps football fans compare two Premier League player-seasons without switching between disconnected statistics pages. Each player has an independent season selector, including comparisons of the same player in different years. Charts compare recorded season totals. Timeline offers separate simulated progression and recorded matchweek overlays. I built the project to practise API integration, data visualisation and responsive React interfaces.
 
 **Technologies:** React 19, React Router, JavaScript, Chart.js, react-chartjs-2, React Icons, CSS, Create React App and the API-SPORTS Football API. The frontend is hosted on Vercel.
 
@@ -49,11 +49,13 @@ REACT_APP_API_SPORTS_KEY=your_api_sports_key_here
 npm start
 ```
 
-Open [localhost:3000](http://localhost:3000/). Select two players before opening Compare or Stats. Restart the development server after changing environment settings.
+Open [localhost:3000](http://localhost:3000/). Home, Compare and Timeline share one navigation bar. Names can be selected from search results or resolved by clicking Compare or Timeline in the navbar. Restart the development server after changing environment settings.
 
 ### Backend and data service
 
-There is no project-owned backend or database to install. React requests the external `/players` endpoint at `https://v3.football.api-sports.io`, using league `39` and season `2024` (displayed as 2024/25). Provider access, quotas and historical-season permissions affect results.
+There is no project-owned backend or database to install. React requests API-SPORTS endpoints at `https://v3.football.api-sports.io`, using Premier League `39` and a separate season start year per player. Discovery has a 2016/17 floor and follows the newest covered season. Explicit plan restrictions narrow the choices; on 2 November 2026 the configured key allowed only 2022/23–2024/25, not 2016/17 or 2026/27. If the coverage service is slow, the provider's explicit allowed-year range supplies choices and each search checks actual player availability.
+
+Recorded matchweek overlays load only on request. They default to matchweeks 1–6, adjustable to 38, and show a worst-case API-request estimate. The current free key rejects batched fixture IDs but permits individual fixture details, so the loader falls back to cached single-fixture requests. Loads estimated above 20 requests require an explicit quota-approval checkbox. Other quota or plan errors stop loading; missing statistics remain gaps, not zero. Successful searches are cached for five minutes and fixture/coverage responses for one hour.
 
 Create React App embeds `REACT_APP_` values in the browser bundle. This configuration does not keep a provider key secret. A future server-side proxy would be needed for private credentials and central rate limits. `.gitignore` excludes local environment files; previously committed values still remain in Git history until separately addressed.
 
@@ -66,7 +68,10 @@ Create React App embeds `REACT_APP_` values in the browser bundle. This configur
 | Chart views | Radar, bar, pie and line charts; labels explain relative versus absolute scales. |
 | Data integrity | Missing fields display as `N/A`, rather than becoming a recorded zero. |
 | Simulated timeline | Stable seeded points end at the recorded total; these are not real monthly results. |
-| Navigation | Shared React state retains the pair across in-app routes. A full reload clears it. |
+| Cross-season comparison | Independent season choices and season-labelled charts, including the same player across years. |
+| Recorded overlays | Real counts aligned by matchweek, with bounded windows, request estimates and a free-plan fallback. |
+| Navigation | One shared navbar and active-route indicator. Navbar and footer links resolve typed names and retain selected records. |
+| Saved comparison | Draft names, seasons and fresh selected records survive reloads in the same browser. A Clear comparison control removes the saved pair. |
 | Responsive interface | Desktop and mobile layouts with a collapsible navigation menu. |
 
 ![PitchStats player search](docs/images/home.png)
@@ -81,16 +86,16 @@ These screenshots come from local functional checks. Populated comparison exampl
 
 ```mermaid
 flowchart LR
-  A[Search and select two players] --> B[Shared App state]
+  A[Search and select two players] --> B[Shared App state and validated browser storage]
   A --> C[API-SPORTS players endpoint]
   C --> B
   B --> D[Compare: totals and relative charts]
-  B --> E[Stats: simulated timeline]
+  B --> E[Timeline: simulated or recorded matchweeks]
   D --> F[Chart.js canvases]
   E --> F
 ```
 
-`App.js` owns the selected pair so route changes do not discard it. `playerSearch.js` handles provider requests. `playerData.js` normalises statistics and builds the simulated timeline. Pages concentrate on the interface and chart configuration. There is no ERD because the project has no application database.
+`App.js` owns the selected pair, season choices, draft searches and navigation resolution. `selectionStorage.js` validates a minimal localStorage snapshot; it never stores the provider key. Selected statistics expire after 24 hours, while names and season choices remain for a fresh lookup. Malformed or blocked storage falls back safely to in-memory use. `playerSearch.js` handles provider access and caching. `playerData.js` normalises statistics, aggregates same-season club records after transfers and builds the simulation. `matchHistory.js` loads recorded matchweek details. There is no ERD because the project has no application database.
 
 ### Code decision: keep missing data distinct
 
@@ -132,11 +137,13 @@ npm run build
 
 For Vercel, use Create React App, `npm ci`, `npm run build` and output directory `build`. Set the provider environment variable in the project settings. GitHub and Vercel both use the `main` production branch. Only pushed commits are available to the Git integration.
 
+`vercel.json` explicitly serves the SPA entry for `/compare` and `/timeline`, so direct links and hard reloads use the same application shell rather than a separate page or a host 404. Browser storage is origin-specific: localhost selections do not transfer to the Vercel domain or to a different device. Recorded timeline windows and visibility toggles are view state; the saved snapshot contains the player pair, years and draft names.
+
 ## Conclusion
 
 The strongest outcome is a clearer comparison experience: the pair survives navigation, chart scales are explained and missing data stays visible. The main challenge was making API-driven charts trustworthy when fields or requests fail.
 
-Next I would add a server-side provider proxy, real fixture-level history, persistent/shareable player selections and deeper player profiles. Heatmaps, xG/xA analysis and exports are not implemented features.
+Next I would add a server-side provider proxy, shareable comparison URLs, per-90-minute comparisons and deeper player profiles. Heatmaps, xG/xA analysis and exports are not implemented features.
 
 ## Credits and use terms
 
