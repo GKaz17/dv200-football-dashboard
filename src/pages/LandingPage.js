@@ -1,25 +1,12 @@
 // LandingPage.js
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { TbChartArrows } from "react-icons/tb";
-import { MdOutlineTimer, MdShare } from "react-icons/md";
-import { FaStar } from "react-icons/fa";
+import { MdOutlineTimer, MdBarChart } from "react-icons/md";
+import { FaStar, FaSearch, FaRedo } from "react-icons/fa";
 import { GiSoccerBall } from "react-icons/gi";
-
-const API_KEY = process.env.REACT_APP_API_SPORTS_KEY;
-
-// One reusable fetch — both panels use this same function
-function fetchPlayers(query) {
-  if (!API_KEY) {
-    console.error("Missing REACT_APP_API_SPORTS_KEY in your local env file.");
-    return Promise.resolve({ response: [] });
-  }
-
-  return fetch(
-    `https://v3.football.api-sports.io/players?search=${encodeURIComponent(query)}&league=39&season=2024`,
-    { method: "GET", headers: { "x-apisports-key": API_KEY } }
-  ).then((res) => res.json());
-}
+import { formatSeason, playerClub } from "../playerData";
+import { searchPlayers } from "../playerSearch";
 
 // PLAYER PANEL
 
@@ -28,12 +15,41 @@ function fetchPlayers(query) {
 //   This is the key UX fix for same-name players — you can see at a glance
 //   which "Jones" or "Silva" you're picking.
 // 
-function PlayerPanel({ label, placeholder, player, onSelect }) {
-  const [query, setQuery]             = useState("");
+function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, onSeasonChange, onAccessDenied, onSearchStart }) {
+  const [query, setQuery]             = useState(player?.player?.name ?? "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading]         = useState(false);
+  const [status, setStatus]           = useState("");
+  const [error, setError]             = useState("");
+  const [noResults, setNoResults]     = useState(false);
   const debounceRef = useRef(null);
   const wrapperRef  = useRef(null);
+  const controllerRef = useRef(null);
+  const requestRef = useRef(0);
+  const lastSearchRef = useRef(null);
+  const inputId = useId();
+  const previousSeason = useRef(season);
+
+  useEffect(() => {
+    if (previousSeason.current === season) return;
+    previousSeason.current = season;
+    clearTimeout(debounceRef.current);
+    controllerRef.current?.abort();
+    requestRef.current += 1;
+    setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+  }, [season]);
+
+  function cancelPendingSearch() {
+    clearTimeout(debounceRef.current);
+    controllerRef.current?.abort();
+    requestRef.current += 1;
+  }
+
+  useEffect(() => () => {
+    clearTimeout(debounceRef.current);
+    controllerRef.current?.abort();
+    requestRef.current += 1;
+  }, []);
 
   // Close suggestions when clicking outside the panel
   useEffect(() => {
@@ -48,18 +64,58 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
 
   // Debounced autocomplete — waits 300ms after user stops typing 
   function handleChange(e) {
+    onSearchStart();
     const value = e.target.value;
+    cancelPendingSearch();
     setQuery(value);
-    clearTimeout(debounceRef.current);
-    if (value.length > 2) {
+    setLoading(false);
+    setStatus("");
+    setError("");
+    setNoResults(false);
+    setSuggestions([]);
+    if (value.trim().length > 2) {
       debounceRef.current = setTimeout(() => {
-        fetchPlayers(value).then((data) => {
-          // Slice to 5 results max — any more and the dropdown gets unwieldy
-          setSuggestions((data.response ?? []).slice(0, 5));
-        });
+        runSearch(value, false);
       }, 300);
-    } else {
-      setSuggestions([]);
+    }
+  }
+
+  async function runSearch(value, selectFirst) {
+    cancelPendingSearch();
+    const request = requestRef.current;
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    lastSearchRef.current = { query: value, selectFirst };
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    setLoading(true);
+    setStatus("");
+    setError("");
+    setNoResults(false);
+    setSuggestions([]);
+    try {
+      onSearchStart();
+      const results = await searchPlayers(value, controller.signal, season);
+      if (request !== requestRef.current) return;
+      if (results.length === 0) {
+        setNoResults(true);
+        setStatus(`No players found for "${value.trim()}" in the ${formatSeason(season)} Premier League dataset. Try another name or season.`);
+      } else if (selectFirst) {
+        pickSuggestion(results[0]);
+      } else {
+        setSuggestions(results.slice(0, 5));
+        setStatus(`${Math.min(results.length, 5)} results available.`);
+      }
+    } catch (failure) {
+      if (request !== requestRef.current) return;
+      if (failure?.kind === "plan") onAccessDenied(failure);
+      setError(controller.signal.aborted
+        ? "The search timed out. Please retry."
+        : failure instanceof TypeError || failure instanceof SyntaxError
+          ? "Player search could not connect. Please check your connection and retry."
+          : failure?.message || "Player search failed. Please retry.");
+    } finally {
+      clearTimeout(timeout);
+      if (request === requestRef.current) setLoading(false);
     }
   }
 
@@ -69,23 +125,20 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
   }
 
   function handleSearch() {
-    if (query.trim().length < 3) return;
-    setLoading(true);
-    setSuggestions([]);
-    fetchPlayers(query).then((data) => {
-      if (data.response?.length > 0) {
-        onSelect(data.response[0]);
-        setQuery(data.response[0].player.name);
-      }
-      setLoading(false);
-    });
+    if (query.trim().length < 3 || !seasons.some((item) => item.year === season)) return;
+    runSearch(query, true);
   }
 
   // When the user clicks a suggestion, select that player immediately
   // and clear the dropdown — no need to press Search
   function pickSuggestion(p) {
+    cancelPendingSearch();
     onSelect(p);
     setQuery(p.player.name);
+    setLoading(false);
+    setError("");
+    setStatus("");
+    setNoResults(false);
     setSuggestions([]);
   }
 
@@ -93,13 +146,25 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
   const stats = player?.statistics?.[0];
 
   return (
-    <div className="player-panel" ref={wrapperRef}>
+    <div className="player-panel" ref={wrapperRef} role="group" aria-label={label}>
 
       {/* Top label: "PLAYER A" / "PLAYER B" */}
       <div className="panel-label-row">
-        <span className="panel-label">{label}</span>
+        <label className="panel-label" htmlFor={inputId}>{label}</label>
         {/* Show a small "Selected" indicator when a player is chosen */}
         {player && <span className="panel-selected-tag">✓ Selected</span>}
+      </div>
+
+      <div className="season-field">
+        <label htmlFor={`${inputId}-season`}>Season</label>
+        <select id={`${inputId}-season`} aria-label={`${label} season`} value={season}
+          disabled={!seasons.length} onChange={(event) => {
+            cancelPendingSearch();
+            setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+            onSeasonChange(Number(event.target.value));
+          }}>
+          {seasons.map((item) => <option key={item.year} value={item.year}>{formatSeason(item.year)}{item.current ? " (current)" : ""}</option>)}
+        </select>
       </div>
 
       {/*  Image and info area 
@@ -131,7 +196,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
                 />
               )}
               <span className="panel-club-name">
-                {stats?.team?.name ?? "—"}
+                {playerClub(player)}
               </span>
             </div>
 
@@ -156,7 +221,11 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
       <div className="panel-search-wrap">
         <div className="panel-input-row">
           <input
+            id={inputId}
             type="text"
+            disabled={!seasons.length}
+            autoComplete="off"
+            aria-describedby={`${inputId}-status`}
             className="panel-input"
             placeholder={placeholder}
             value={query}
@@ -164,21 +233,36 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
             onKeyDown={handleKeyDown}
           />
           <button
+            type="button"
             className="panel-search-btn"
+            aria-label={`Search ${label}`}
             onClick={handleSearch}
-            disabled={loading || query.trim().length < 3}
+            disabled={loading || !seasons.length || query.trim().length < 3}
           >
-            {loading ? "..." : "Search"}
+            <FaSearch aria-hidden="true" /> {loading ? "Searching..." : "Search"}
           </button>
         </div>
+
+        <p id={`${inputId}-status`} className="search-status" role={error ? "alert" : "status"}>
+          {error || (loading ? "Searching players..." : status)}
+        </p>
+        {(error || noResults) && (
+          <button type="button" className="search-retry" disabled={loading} onClick={() => {
+            const last = lastSearchRef.current;
+            if (last) runSearch(last.query, last.selectFirst);
+          }}>
+            <FaRedo aria-hidden="true" /> Retry search
+          </button>
+        )}
 
         {/* Suggestion dropdown
             Each row: [small photo] [player name] [team name — pushed right]
             The team name on the right is the key feature for same-name players */}
         {suggestions.length > 0 && (
-          <ul className="suggestion-list">
-            {suggestions.map((p, i) => (
-              <li key={i} onClick={() => pickSuggestion(p)}>
+          <ul className="suggestion-list" aria-label={`${label} results`}>
+            {suggestions.map((p) => (
+              <li key={p.player.id}>
+                <button type="button" onClick={() => pickSuggestion(p)} aria-label={`Select ${p.player.name} (${p.statistics?.[0]?.team?.name ?? "Club unavailable"})`}>
                 <img
                   src={p.player.photo}
                   alt=""
@@ -188,6 +272,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
                 <span className="suggestion-team">
                   {p.statistics?.[0]?.team?.name ?? ""}
                 </span>
+                </button>
               </li>
             ))}
           </ul>
@@ -207,15 +292,15 @@ function positionClass(pos) {
  
 // MAIN PAGE
  
-function LandingPage() {
-  const [player1, setPlayer1] = useState(null);
-  const [player2, setPlayer2] = useState(null);
+function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
+  season1, season2, seasons, availability, seasonLoading, seasonError, onRetrySeasons,
+  onSeasonChange, onAccessDenied, onSearchStart }) {
   const navigate   = useNavigate();
   const bothLoaded = player1 && player2;
 
   function handleCompare() {
     if (!bothLoaded) return;
-    navigate("/compare", { state: { player1, player2 } });
+    navigate("/compare");
   }
 
   return (
@@ -225,7 +310,7 @@ function LandingPage() {
       <section className="hero">
         <div className="powered-badge">
           <FaStar className="powered-icon" />
-          POWERED BY OPTA DATA
+          DATA FROM API-SPORTS
         </div>
 
         {/* Three-part title: white / blue-gradient / gold
@@ -234,34 +319,47 @@ function LandingPage() {
           COMPARE THE BEST OF
           <span className="hero-title-line2">
             <span className="hero-the-pl">THE PL </span>
-            <span className="hero-2025">2025</span>
+            <span className="hero-2025">BY SEASON</span>
           </span>
         </h1>
 
         <p className="hero-subtitle">
           Analyze head-to-head performance metrics for your favorite Premier
-          League stars with professional-grade analytics.
+          League players across the seasons available through your API plan.
         </p>
       </section>
+
+      <div className="season-availability">
+        <p className="data-note" role="status">{seasonLoading ? "Checking Premier League season availability..." : availability.notice || "Player-season coverage is supplied by API-SPORTS. Available years depend on coverage and your API plan."}</p>
+        {seasonError && <p className="data-note" role="alert">{seasonError}</p>}
+        {!seasons.length && <p className="data-note" role="alert">No covered player seasons are accessible within your current plan and the 2016/17-or-later range.</p>}
+        <button className="search-retry" type="button" onClick={onRetrySeasons} disabled={seasonLoading}>
+          <FaRedo aria-hidden="true" /> Refresh seasons
+        </button>
+      </div>
 
       {/*  PLAYER SELECTION  */}
       <section className="selection-section">
 
         <PlayerPanel
-          label="PLAYER A"
+          label="Player A"
           placeholder="Search Player A (e.g. Haaland)..."
           player={player1}
-          onSelect={setPlayer1}
+          onSelect={onSelectPlayer1}
+          season={season1} seasons={seasons} onSeasonChange={(year) => onSeasonChange(1, year)}
+          onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />
 
         {/* VS badge: filled circle between the two panels */}
         <div className="vs-badge">VS</div>
 
         <PlayerPanel
-          label="PLAYER B"
+          label="Player B"
           placeholder="Search Player B (e.g. Salah)..."
           player={player2}
-          onSelect={setPlayer2}
+          onSelect={onSelectPlayer2}
+          season={season2} seasons={seasons} onSeasonChange={(year) => onSeasonChange(2, year)}
+          onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />
 
       </section>
@@ -281,12 +379,12 @@ function LandingPage() {
       {/*  FEATURE HIGHLIGHTS  */}
       <section className="features-section">
         {[
-          { icon: <TbChartArrows />, title: "Advanced Metrics",
-            desc: "xG, xA, progressive carries, and heatmap overlays for every player." },
-          { icon: <MdOutlineTimer />, title: "Live Data",
-            desc: "Stats updated in real-time as the 2024/25 season unfolds." },
-          { icon: <MdShare />, title: "Export Insights",
-            desc: "Generate beautiful comparison charts to share on social media." },
+          { icon: <TbChartArrows />, title: "Season Statistics",
+            desc: "Compare available goals, assists, shots, passes and defensive totals across selected seasons." },
+          { icon: <MdOutlineTimer />, title: "Simulated Timeline",
+            desc: "Explore an illustrative progression based on season totals, not recorded match history." },
+          { icon: <MdBarChart />, title: "Head-to-Head Charts",
+            desc: "View pair-relative radar scores, raw totals and shares of combined goal contributions." },
         ].map((f) => (
           <div className="feature-item" key={f.title}>
             <div className="feature-icon-wrap">{f.icon}</div>

@@ -1,390 +1,233 @@
-// TimelinePage.js
-//
-// This page shows a simulated season performance timeline for both players.
-// It receives player1 and player2 from React Router location.state —
-// the same objects passed from LandingPage through ComparePage.
-//
-// Sections:
-//   1. Page header  — title, season label, metric dropdown (top right)
-//   2. Chart card   — player toggle pills + line chart
-//   3. Comparative stats — two derived stat cards side by side
-//   4. Insight card — dynamic sentence based on who leads the selected stat
-//   5. Action buttons + Footer
-
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BsStars } from "react-icons/bs";
-
+import { FaDownload, FaRedo, FaTimes } from "react-icons/fa";
 import {
-  Chart as ChartJS,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-  Filler,   // Required for the area fill under the line — must be registered
+  Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement,
+  Tooltip, Legend, Filler,
 } from "chart.js";
-
 import { Line } from "react-chartjs-2";
+import { formatStat, playerMetrics, recordLabel, recordSeason, seasonSummary, simulatedTimeline } from "../playerData";
+import { historyRequestEstimate, loadMatchHistory } from "../matchHistory";
 
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Filler);
 
-ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend,
-  Filler
-);
-
-//  Colour system 
-// Same two-player colour system as ComparePage so users learn it once.
-const C1 = { solid: "#3b82f6", faded: "rgba(59,130,246,0.12)"  };
-const C2 = { solid: "#f59e0b", faded: "rgba(245,158,11,0.08)"  };
-
-//  generateTimeline() 
-// The checkpoints aren't perfectly linear — they follow a realistic curve
-// where players tend to start slower and peak mid-season.
-// Small random variance (±4%) makes P1 and P2 lines look distinct rather than identical ramps that would be confusing to read.
-
-function generateTimeline(total) {
-
-  // 10 checkpoints across Aug–May, to get a more realistic accumulation curve
-  const curve = [0.05, 0.12, 0.22, 0.35, 0.46, 0.57, 0.68, 0.80, 0.92, 1.0];
-  return curve.map((fraction) => {
-    const noise = (Math.random() - 0.5) * 0.08;
-    return Math.max(0, Math.round(total * (fraction + noise)));
-  });
-}  
-
-//  Stat options 
-// Each option has a value (matches the API field key) and a display label.
-// The metric dropdown top-right cycles through these.
+const COLORS = [
+  { solid: "#3b82f6", faded: "rgba(59,130,246,0.12)" },
+  { solid: "#f59e0b", faded: "rgba(245,158,11,0.08)" },
+];
 const STAT_OPTIONS = [
-  { value: "goals",   label: "Goals"   },
-  { value: "assists", label: "Assists" },
-  { value: "shots",   label: "Shots"   },
-  { value: "passes",  label: "Passes"  },
+  { value: "goals", label: "Goals" }, { value: "assists", label: "Assists" },
+  { value: "shots", label: "Shots" }, { value: "passes", label: "Passes" },
   { value: "tackles", label: "Tackles" },
 ];
-
-//  Chart.js options 
 const lineOptions = {
-  responsive:          true,
-  maintainAspectRatio: false,
+  responsive: true, maintainAspectRatio: false,
   plugins: {
-    // Hide the default legend — we have our own custom player pills above the chart
     legend: { display: false },
     tooltip: {
-      backgroundColor: "#1e293b",
-      borderColor:     "#334155",
-      borderWidth:     1,
-      titleColor:      "#f1f5f9",
-      bodyColor:       "#94a3b8",
-      padding:         10,
+      backgroundColor: "#1e293b", borderColor: "#334155", borderWidth: 1,
+      titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
     },
   },
   scales: {
-    x: {
-      ticks: { color: "#64748b", font: { size: 11 } },
-      grid:  { color: "rgba(255,255,255,0.04)" },
-    },
+    x: { ticks: { color: "#94a3b8", font: { size: 11 } }, grid: { color: "rgba(255,255,255,0.04)" } },
     y: {
       beginAtZero: true,
-      // Hide y-axis tick labels 
-      ticks:  { display: false },
-      grid:   { color: "rgba(255,255,255,0.04)" },
-      border: { display: false },
+      title: { display: true, text: "Illustrative cumulative count", color: "#94a3b8" },
+      ticks: { color: "#94a3b8", precision: 0 },
+      grid: { color: "rgba(255,255,255,0.04)" },
     },
   },
 };
 
-//  MAIN PAGE 
-function TimelinePage() {
-  const location = useLocation();
-  const navigate  = useNavigate();
-
-  const player1 = location.state?.player1;
-  const player2 = location.state?.player2;
-
-  //  State 
+function TimelinePage({ player1, player2, seasons = [] }) {
+  const navigate = useNavigate();
   const [selectedStat, setSelectedStat] = useState("goals");
-
-  // Player visibility: controls whether each line shows on the chart.
-  // This is an object so we can toggle by player key without an index.
   const [visible, setVisible] = useState({ p1: true, p2: true });
+  const [source, setSource] = useState("simulated");
+  const [history, setHistory] = useState(null);
+  const [historyError, setHistoryError] = useState("");
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [steps, setSteps] = useState(0);
+  const [windowStart, setWindowStart] = useState("1");
+  const [windowEnd, setWindowEnd] = useState("6");
+  const [approveBudget, setApproveBudget] = useState(false);
+  const [loadBudget, setLoadBudget] = useState(0);
+  const requestRef = useRef(null);
+  const pairKey = [player1, player2].map((player) => player ? `${player.player.id}:${recordSeason(player)}` : "").join("|");
+  useEffect(() => {
+    setHistory(null); setHistoryError(""); setHistoryLoading(false); setApproveBudget(false);
+    return () => requestRef.current?.abort();
+  }, [pairKey, windowStart, windowEnd]);
 
-  //  GUARD — must be before any data access 
-  // If someone navigates directly to the timeline without player state, we catch it here before anything tries to read from null. So the inital page will be empty like the Comparison Page.
   if (!player1 || !player2) {
     return (
       <div className="timeline-guard">
-        <p>No players selected.</p>
-        <button className="action-btn action-btn--primary" onClick={() => navigate("/")}>
-          ← Back to Search
-        </button>
+        <p>Select two players to open a simulated timeline.</p>
+        <button className="action-btn action-btn--primary" onClick={() => navigate("/")}>Back to Search</button>
       </div>
     );
   }
 
-  function togglePlayer(key) {
-    setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
-
-  //  Extract stats 
-  const s1 = player1.statistics?.[0];
-  const s2 = player2.statistics?.[0];
-
-  const name1 = player1.player.name;
-  const name2 = player2.player.name;
-
-  // Season totals for the selected stat — feeds into generateTimeline()
-  const totals1 = {
-    goals:   s1?.goals?.total    || 0,
-    assists: s1?.goals?.assists  || 0,
-    shots:   s1?.shots?.total    || 0,
-    passes:  s1?.passes?.total   || 0,
-    tackles: s1?.tackles?.total  || 0,
-  };
-
-  const totals2 = {
-    goals:   s2?.goals?.total    || 0,
-    assists: s2?.goals?.assists  || 0,
-    shots:   s2?.shots?.total    || 0,
-    passes:  s2?.passes?.total   || 0,
-    tackles: s2?.tackles?.total  || 0,
-  };
-
-  const total1 = totals1[selectedStat];
-  const total2 = totals2[selectedStat];
-
-  // Current stat label for display (e.g. "Goals")
-  const statLabel = STAT_OPTIONS.find((o) => o.value === selectedStat)?.label ?? "";
-
-  //  Comparative stats (derived from API) 
-  // Pass accuracy: the API provides passes.accuracy as a percentage directly.
-  // Dribble success rate: dribbles.success / dribbles.attempts * 100
-  const passAcc1 = s1?.passes?.accuracy  || 0;
-  const passAcc2 = s2?.passes?.accuracy  || 0;
-
-  const dribAtt1 = s1?.dribbles?.attempts || 0;
-  const dribSuc1 = s1?.dribbles?.success  || 0;
-  const dribAtt2 = s2?.dribbles?.attempts || 0;
-  const dribSuc2 = s2?.dribbles?.success  || 0;
-
-
-  const dribRate1 = dribAtt1 > 0 ? Math.round((dribSuc1 / dribAtt1) * 100) : 0;
-  const dribRate2 = dribAtt2 > 0 ? Math.round((dribSuc2 / dribAtt2) * 100) : 0;
-
-  // Generates a relevant sentence based on who leads the selected stat.
-  // This makes the insight card feel connected to what the user is looking at.
-  function getInsight() {
-    if (total1 === total2) {
-      return `${name1} and ${name2} are perfectly matched on ${statLabel.toLowerCase()} this season.`;
-    }
-    const leader  = total1 > total2 ? name1 : name2;
-    const trailer = total1 > total2 ? name2 : name1;
-    const leading = Math.max(total1, total2);
-    const diff    = Math.abs(total1 - total2);
-    return `${leader} leads on ${statLabel.toLowerCase()} this season with ${leading}, outperforming ${trailer} by ${diff}.`;
-  }
-
-  //  Build chart datasets 
-  const datasets = [];
-
-  if (visible.p1) {
-    datasets.push({
-      label:                name1,
-      data:                 generateTimeline(total1),
-      borderColor:          C1.solid,
-      backgroundColor:      C1.faded,
-      pointBackgroundColor: C1.solid,
-      pointRadius:          4,
-      pointHoverRadius:     6,
-      borderWidth:          2.5,
-      fill:                 true,   // area fill under the line (needs Filler plugin)
-      tension:              0.4,    // smooth S-curve 
-      // Solid line for P1
-      borderDash:           [],
-    });
-  }
-
-  if (visible.p2) {
-    datasets.push({
-      label:                name2,
-      data:                 generateTimeline(total2),
-      borderColor:          C2.solid,
-      backgroundColor:      C2.faded,
-      pointBackgroundColor: C2.solid,
-      pointRadius:          4,
-      pointHoverRadius:     6,
-      borderWidth:          2.5,
-      fill:                 false,
-      tension:              0.4,
-      // Dashed line for P2 — matches the wireframe visual style
-      borderDash:           [6, 4],
-    });
-  }
-
+  const players = [player1, player2];
+  const metrics = players.map(playerMetrics);
+  const names = players.map(recordLabel);
+  const seasonLabel = seasonSummary(players);
+  const totals = metrics.map((stats) => stats[selectedStat]);
+  const statLabel = STAT_OPTIONS.find((option) => option.value === selectedStat).label;
+  const firstWeek = Number(windowStart), lastWeek = Number(windowEnd);
+  const validWindow = Number.isInteger(firstWeek) && Number.isInteger(lastWeek) && firstWeek >= 1 && lastWeek <= 38 && firstWeek <= lastWeek;
+  const requestEstimate = historyLoading || history ? loadBudget : validWindow ? historyRequestEstimate(players, firstWeek, lastWeek) : 0;
   const lineData = {
-   
-    labels: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"],
-    datasets,
+    labels: source === "recorded" ? Array.from({ length: validWindow ? lastWeek - firstWeek + 1 : 0 }, (_, index) => `MW ${firstWeek + index}`) : ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"],
+    datasets: players.flatMap((player, index) => visible[index === 0 ? "p1" : "p2"] ? [{
+      label: names[index],
+      data: source === "recorded" ? (history?.[index] ?? []).slice(firstWeek - 1, lastWeek).map((week) => week[selectedStat]) : simulatedTimeline(totals[index], `${player.player.id}:${recordSeason(player)}:${selectedStat}`),
+      borderColor: COLORS[index].solid, backgroundColor: COLORS[index].faded,
+      pointBackgroundColor: COLORS[index].solid, pointRadius: 4, pointHoverRadius: 6,
+      borderWidth: 2.5, fill: source === "simulated" && index === 0, tension: 0, spanGaps: false,
+      borderDash: index === 0 ? [] : [6, 4],
+    }] : []),
   };
+  const options = { ...lineOptions, scales: { ...lineOptions.scales, y: { ...lineOptions.scales.y,
+    title: { ...lineOptions.scales.y.title, text: source === "recorded" ? `Recorded ${statLabel.toLowerCase()} per matchweek` : "Illustrative cumulative count" } } } };
+  const noCoverage = players.some((player) => seasons.find((item) => item.year === recordSeason(player))?.coverage?.fixtures?.statistics_players === false);
 
-  //  Render 
+  async function loadHistory() {
+    if (!validWindow || (requestEstimate > 20 && !approveBudget)) return;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setLoadBudget(requestEstimate);
+    setHistoryLoading(true); setHistoryError(""); setSteps(0);
+    try {
+      const loaded = new Map();
+      const rows = [];
+      for (const player of players) {
+        const key = `${player.player.id}:${recordSeason(player)}`;
+        if (!loaded.has(key)) loaded.set(key, await loadMatchHistory(player, controller.signal,
+          () => { if (!controller.signal.aborted) setSteps((value) => value + 1); }, { firstWeek, lastWeek }));
+        rows.push(loaded.get(key));
+      }
+      if (!controller.signal.aborted) setHistory(rows);
+    } catch (error) {
+      if (!controller.signal.aborted) setHistoryError(error instanceof TypeError ? "Match history could not connect. Please retry." : error.message);
+    } finally { if (!controller.signal.aborted) setHistoryLoading(false); }
+  }
+
+  function insight() {
+    if (totals.some((total) => total == null)) {
+      return `A season-total comparison for ${statLabel.toLowerCase()} is unavailable because one or both records are missing this statistic.`;
+    }
+    if (totals[0] === totals[1]) {
+      return `${names[0]} and ${names[1]} each have ${totals[0]} recorded ${statLabel.toLowerCase()} in their selected seasons.`;
+    }
+    const leading = totals[0] > totals[1] ? 0 : 1;
+    return `${names[leading]} has the higher recorded season total: ${totals[leading]} ${statLabel.toLowerCase()}, ${Math.abs(totals[0] - totals[1])} more than ${names[1 - leading]}.`;
+  }
+
   return (
     <div className="timeline-page">
-
-      {/*  PAGE HEADER */}
       <div className="timeline-header">
-
         <div className="timeline-header-left">
-   
-          <p className="season-label">2025 SEASON ANALYTICS</p>
-
-      
-          <h1 className="timeline-title">Performance Delta</h1>
-
-     
+          <p className="season-label">{seasonLabel} season overlay</p>
+          <h1 className="timeline-title">{source === "recorded" ? "Recorded Season Overlay" : "Simulated Season Timeline"}</h1>
           <div className="timeline-badge-row">
-            <span className="avg-badge">+ Avg</span>
-            <span className="avg-context">vs. Previous Season</span>
+            <span className="avg-badge">{source === "recorded" ? "Recorded" : "Simulated"}</span>
+            <span className="avg-context">{source === "recorded" ? "Aligned by Premier League matchweek" : "Not recorded match history"}</span>
           </div>
         </div>
-
-        {/* Metric selector*/}
         <div className="metric-selector">
-          <label className="metric-label">Metric:</label>
-          <select
-            className="metric-select"
-            value={selectedStat}
-            onChange={(e) => setSelectedStat(e.target.value)}
-          >
-            {STAT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
+          <label className="metric-label" htmlFor="timeline-metric">Metric:</label>
+          <select id="timeline-metric" className="metric-select" value={selectedStat}
+            onChange={(event) => setSelectedStat(event.target.value)}>
+            {STAT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </div>
-
       </div>
-
-      {/*  CHART CARD */}
       <div className="chart-card">
-
-        {/* Player toggle pills */}
+        <fieldset className="timeline-source">
+          <legend>Data source</legend>
+          <label><input type="radio" name="timeline-source" value="simulated" checked={source === "simulated"} onChange={() => { requestRef.current?.abort(); setHistoryLoading(false); setSource("simulated"); }} /> Simulated</label>
+          <label><input type="radio" name="timeline-source" value="recorded" checked={source === "recorded"} onChange={() => setSource("recorded")} /> Recorded matchweeks</label>
+        </fieldset>
+        <p className="data-note">
+          {source === "recorded" ? "Real per-matchweek counts, aligned by round rather than calendar date. Missing or unplayed weeks are gaps, not zero. A zero requires a recorded zero or a complete team player list showing no appearance. Coverage can be partial and totals are not adjusted per 90 minutes." : <>These points illustrate a possible progression toward the API season totals.
+          Monthly values are generated, not fetched from matches, and do not measure form.
+          The same player, season and metric always produce the same points. N/A means no total is available.</>}
+        </p>
+        {source === "recorded" && <div className="history-controls">
+          <div className="matchweek-window">
+            <label htmlFor="matchweek-start">From matchweek<input id="matchweek-start" type="number" min="1" max="38" value={windowStart} disabled={historyLoading} onChange={(event) => setWindowStart(event.target.value)} /></label>
+            <label htmlFor="matchweek-end">To matchweek<input id="matchweek-end" type="number" min="1" max="38" value={windowEnd} disabled={historyLoading} onChange={(event) => setWindowEnd(event.target.value)} /></label>
+          </div>
+          {!validWindow && <p className="data-note" role="alert">Choose a matchweek window from 1 to 38, with the start no later than the end.</p>}
+          <p className="data-note">Up to {requestEstimate} API requests before caching, including a single-fixture fallback if batching is not included in your plan. Match data is reused for all five metrics.</p>
+          {requestEstimate > 20 && <label className="budget-approval"><input type="checkbox" checked={approveBudget} disabled={historyLoading} onChange={(event) => setApproveBudget(event.target.checked)} /> Allow up to {requestEstimate} requests; this may exhaust the daily API allowance.</label>}
+          {noCoverage ? <p className="data-note" role="status">Match-player statistics are not covered for one of these seasons.</p> :
+            <button type="button" className="search-retry" disabled={historyLoading || Boolean(history) || !validWindow || (requestEstimate > 20 && !approveBudget)} onClick={loadHistory}>
+              {historyError ? <FaRedo aria-hidden="true" /> : <FaDownload aria-hidden="true" />}
+              {historyLoading ? `Loading match data... ${steps} steps` : historyError ? "Retry match history" : history ? "Match history loaded" : "Load match history"}
+            </button>}
+          {historyLoading && <button className="search-retry" type="button" onClick={() => {
+            requestRef.current?.abort(); setHistoryLoading(false); setHistoryError("Match-history loading was cancelled.");
+          }}><FaTimes aria-hidden="true" /> Cancel loading</button>}
+          {historyError && <p className="data-note" role="alert">{historyError}</p>}
+        </div>}
         <div className="player-pills">
-
-
-          <button
-            className={`player-pill ${visible.p1 ? "player-pill--active-p1" : "player-pill--inactive"}`}
-            onClick={() => togglePlayer("p1")}
-          >
-            {/* Coloured dot indicator matching the line colour */}
-            <span className="pill-dot pill-dot--p1" />
-            {name1.split(" ").pop()} 
-          </button>
-
-     
-          <button
-            className={`player-pill ${visible.p2 ? "player-pill--active-p2" : "player-pill--inactive"}`}
-            onClick={() => togglePlayer("p2")}
-          >
-            <span className="pill-dot pill-dot--p2" />
-            {name2.split(" ").pop()}
-          </button>
-
+          {players.map((player, index) => {
+            const key = index === 0 ? "p1" : "p2";
+            return (
+              <button key={key} type="button" aria-pressed={visible[key]}
+                className={`player-pill ${visible[key] ? `player-pill--active-${key}` : "player-pill--inactive"}`}
+                onClick={() => setVisible((previous) => ({ ...previous, [key]: !previous[key] }))}>
+                <span className={`pill-dot pill-dot--${key}`} />
+                {names[index]} · {formatStat(totals[index])} total
+              </button>
+            );
+          })}
         </div>
-
-        {/* Line chart — fixed height container so Chart.js renders correctly */}
-        <div className="chart-inner">
-          <Line data={lineData} options={lineOptions} />
-        </div>
-
+        {(source === "simulated" || history) && <div className="chart-inner">
+          <Line data={lineData} options={options} role="img" aria-label={`${source === "recorded" ? "Recorded" : "Simulated"} ${statLabel.toLowerCase()} timeline`} />
+        </div>}
+        {source === "recorded" && history && players.map((player, index) =>
+          history[index].slice(firstWeek - 1, lastWeek).every((week) => week[selectedStat] == null)
+            ? <p className="data-note" role="status" key={index}>No recorded {statLabel.toLowerCase()} values are available in this matchweek window for {names[index]}. These gaps are not zero.</p>
+            : null)}
+        {totals.some((total) => total == null) && <p className="data-note">A player with N/A has no plotted line for this metric.</p>}
+        {!visible.p1 && !visible.p2 && <p className="data-note" role="status">Both player lines are hidden.</p>}
       </div>
-
-      {/*  COMPARATIVE STATS 
-          Two side-by-side cards showing real derived stats from the API.
-          These update based on whichever players are loaded. */}
       <div className="comp-stats-section">
-        <p className="comp-stats-label">COMPARATIVE STATS</p>
-
+        <p className="comp-stats-label">Recorded season rates</p>
+        <p className="data-note">Shot accuracy = shots on target / total shots. Dribble success = successful / attempted dribbles. N/A means missing data or no attempts.</p>
         <div className="comp-stats-grid">
-
-          {/* Pass accuracy card — API provides this directly */}
-          <div className="comp-stat-card">
-            <p className="comp-stat-title">Pass Accuracy</p>
-            <div className="comp-stat-values">
-              <div className="comp-stat-player">
-                <span className="comp-stat-name">{name1.split(" ").pop()}</span>
-                <span className="comp-stat-num comp-stat-num--p1">{passAcc1}%</span>
-              </div>
-              <div className="comp-stat-player">
-                <span className="comp-stat-name">{name2.split(" ").pop()}</span>
-                <span className="comp-stat-num comp-stat-num--p2">{passAcc2}%</span>
+          {[["shotAccuracy", "Shot Accuracy"], ["dribbleRate", "Dribble Success Rate"]].map(([key, title]) => (
+            <div className="comp-stat-card" key={key}>
+              <p className="comp-stat-title">{title}</p>
+              <div className="comp-stat-values">
+                {players.map((player, index) => (
+                  <div className="comp-stat-player" key={index}>
+                    <span className="comp-stat-name">{names[index]}</span>
+                    <span className={`comp-stat-num comp-stat-num--p${index + 1}`}>{formatStat(metrics[index][key], true)}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            <div className="comp-stat-bar-track">
-              <div className="comp-stat-bar-fill" style={{ width: `${passAcc1}%` }} />
-            </div>
-          </div>
-
-          {/* Dribble success rate card — derived from dribbles.success / dribbles.attempts */}
-          <div className="comp-stat-card">
-            <p className="comp-stat-title">Dribble Success Rate</p>
-            <div className="comp-stat-values">
-              <div className="comp-stat-player">
-                <span className="comp-stat-name">{name1.split(" ").pop()}</span>
-                <span className="comp-stat-num comp-stat-num--p1">{dribRate1}%</span>
-              </div>
-              <div className="comp-stat-player">
-                <span className="comp-stat-name">{name2.split(" ").pop()}</span>
-                <span className="comp-stat-num comp-stat-num--p2">{dribRate2}%</span>
-              </div>
-            </div>
-            <div className="comp-stat-bar-track">
-              <div className="comp-stat-bar-fill" style={{ width: `${dribRate1}%` }} />
-            </div>
-          </div>
-
+          ))}
         </div>
       </div>
-
-      {/*  INSIGHT CARD 
-          Dynamic sentence generated from the current stat and player totals.
-          Changes automatically when you switch the metric dropdown. */}
       <div className="insight-card">
-        <div className="insight-icon-wrap">
-          <BsStars className="insight-icon" />
-        </div>
+        <div className="insight-icon-wrap"><BsStars className="insight-icon" /></div>
         <div className="insight-text">
-          <p className="insight-heading">Insight: Season Leader</p>
-          <p className="insight-body">{getInsight()}</p>
+        <p className="insight-heading">Recorded Season Totals · {seasonLabel}</p>
+          <p className="insight-body">{insight()}</p>
         </div>
       </div>
-
-      {/*  ACTIONS  */}
       <div className="timeline-actions">
-        <button
-          className="action-btn action-btn--secondary"
-          onClick={() => navigate(-1)}
-        >
-          ← Back to Comparison
-        </button>
-        <button
-          className="action-btn action-btn--primary"
-          onClick={() => navigate("/")}
-        >
-          New Comparison
-        </button>
+        <button className="action-btn action-btn--secondary" onClick={() => navigate("/compare")}>Back to Comparison</button>
+        <button className="action-btn action-btn--primary" onClick={() => navigate("/")}>Change Players</button>
       </div>
-
-     
     </div>
   );
 }

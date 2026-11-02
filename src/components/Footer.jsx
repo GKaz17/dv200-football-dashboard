@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { 
   FaHome,
   FaChartBar,
-  FaUser
+  FaGithub
 } from "react-icons/fa";
 
 import { GiSoccerBall } from "react-icons/gi";
@@ -19,7 +19,7 @@ return (
 
 {/* LEFT */}
 <div className="footer-section">
-<h3><GiSoccerBall /> PL Compare</h3>
+<h3><GiSoccerBall /> PitchStats</h3>
 <p>
 Compare Premier League players and explore stats in a simple, interactive way.
 </p>
@@ -44,7 +44,7 @@ Compare Premier League players and explore stats in a simple, interactive way.
 
 <li>
 <Link to="/timeline">
-<FaUser /> Timeline
+<FaChartBar /> Timeline
 </Link>
 </li>
 
@@ -53,9 +53,9 @@ Compare Premier League players and explore stats in a simple, interactive way.
 
 {/* RIGHT */}
 <div className="footer-section">
-<h4>Contact</h4>
-<p>Email: support@plcompare.com</p>
-<p>© 2026 PL Compare</p>
+<h4>Project</h4>
+<a href="https://github.com/GKaz17/dv200-football-dashboard"><FaGithub /> GitHub repository</a>
+<p>© {new Date().getFullYear()} PitchStats · Gedeon Kazadi</p>
 </div>
 
 </div>
