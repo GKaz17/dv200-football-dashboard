@@ -62,7 +62,7 @@ async function selectPair() {
 
 test("season/source copy is accurate and branding has no placeholder contact or dead actions", async () => {
   render(<App />);
-  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("PitchStats");
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("BY SEASON");
   await waitFor(() => expect(screen.getByRole("button", { name: "Refresh seasons" })).toBeEnabled());
   expect(screen.getByText("DATA FROM API-SPORTS")).toBeInTheDocument();
   expect(screen.queryByText(/OPTA|heatmap|xG|Export Insights|support@|PL Compare/i)).not.toBeInTheDocument();
