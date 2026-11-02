@@ -24,21 +24,23 @@ function Navbar({ onNavigate, busy = false }) {
           setMenuOpen(false); toggleRef.current?.focus();
         }
       }}>
-      <NavLink className="logo" to="/" end onClick={(event) => follow(event, "/")} aria-label="PitchStats home">
-        <GiSoccerBall /><span>PITCHSTATS</span>
-      </NavLink>
-      <button className="nav-toggle" type="button" ref={toggleRef}
-        aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={menuOpen} aria-controls="primary-navigation"
-        onClick={() => setMenuOpen((open) => !open)}>
-        {menuOpen ? <FaTimes /> : <FaBars />}
-      </button>
-      <ul id="primary-navigation" className="nav-links">
-        <li><NavLink to="/" end onClick={(event) => follow(event, "/")}><FaHome /><span>HOME</span></NavLink></li>
-        <li><NavLink to="/compare" onClick={(event) => follow(event, "/compare")}><FaChartBar /><span>COMPARE</span></NavLink></li>
-        <li><NavLink to="/timeline" onClick={(event) => follow(event, "/timeline")}><FaChartLine /><span>TIMELINE</span></NavLink></li>
-      </ul>
-      {busy && <span className="nav-pending" role="status">Finding players...</span>}
+      <div className="navbar-inner">
+        <NavLink className="logo" to="/" end onClick={(event) => follow(event, "/")} aria-label="PitchStats home">
+          <GiSoccerBall /><span>PITCHSTATS</span>
+        </NavLink>
+        <button className="nav-toggle" type="button" ref={toggleRef}
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen} aria-controls="primary-navigation"
+          onClick={() => setMenuOpen((open) => !open)}>
+          {menuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+        <ul id="primary-navigation" className="nav-links">
+          <li><NavLink to="/" end onClick={(event) => follow(event, "/")}><FaHome /><span>HOME</span></NavLink></li>
+          <li><NavLink to="/compare" onClick={(event) => follow(event, "/compare")}><FaChartBar /><span>COMPARE</span></NavLink></li>
+          <li><NavLink to="/timeline" onClick={(event) => follow(event, "/timeline")}><FaChartLine /><span>TIMELINE</span></NavLink></li>
+        </ul>
+        {busy && <span className="nav-pending" role="status">Finding players...</span>}
+      </div>
     </nav>
   );
 }

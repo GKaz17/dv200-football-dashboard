@@ -5,28 +5,25 @@ import {
 } from "chart.js";
 import { Bar, Pie, Radar } from "react-chartjs-2";
 import { formatStat, playerMetrics, relativePair, formatSeason, recordSeason, recordLabel, seasonSummary, playerClub } from "../playerData";
+import { PLAYER_COLORS, CHART_LABEL, CHART_GRID, CHART_TOOLTIP } from "../chartTheme";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend,
   ArcElement, RadialLinearScale, PointElement, LineElement);
 
-const C1 = { solid: "#3b82f6", faded: "rgba(59,130,246,0.15)", border: "rgba(59,130,246,0.9)" };
-const C2 = { solid: "#e2e8f0", faded: "rgba(226,232,240,0.1)", border: "rgba(226,232,240,0.7)" };
-const tooltip = {
-  backgroundColor: "#1e293b", borderColor: "#334155", borderWidth: 1,
-  titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
-};
-const legend = { labels: { color: "#94a3b8", font: { size: 12 }, boxWidth: 12, padding: 16 } };
+const [C1, C2] = PLAYER_COLORS;
+const tooltip = CHART_TOOLTIP;
+const legend = { labels: { color: CHART_LABEL, font: { size: 12 }, boxWidth: 12, padding: 16 } };
 const baseOptions = { responsive: true, maintainAspectRatio: false };
 const barOptions = {
   ...baseOptions,
   plugins: { legend, tooltip },
   scales: {
-    x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(255,255,255,0.05)" } },
+    x: { ticks: { color: CHART_LABEL }, grid: { color: CHART_GRID } },
     y: {
       beginAtZero: true,
-      title: { display: true, text: "Season total (count)", color: "#94a3b8" },
-      ticks: { color: "#94a3b8", precision: 0 },
-      grid: { color: "rgba(255,255,255,0.05)" },
+      title: { display: true, text: "Season total (count)", color: CHART_LABEL },
+      ticks: { color: CHART_LABEL, precision: 0 },
+      grid: { color: CHART_GRID },
     },
   },
 };
@@ -44,10 +41,10 @@ const radarOptions = {
   scales: {
     r: {
       min: 0, max: 100,
-      ticks: { color: "#94a3b8", stepSize: 25, backdropColor: "transparent" },
-      pointLabels: { color: "#94a3b8", font: { size: 11 } },
-      grid: { color: "rgba(255,255,255,0.08)" },
-      angleLines: { color: "rgba(255,255,255,0.08)" },
+      ticks: { color: CHART_LABEL, stepSize: 25, backdropColor: "transparent" },
+      pointLabels: { color: CHART_LABEL, font: { size: 11 } },
+      grid: { color: CHART_GRID },
+      angleLines: { color: CHART_GRID },
     },
   },
 };

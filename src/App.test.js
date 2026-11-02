@@ -62,12 +62,23 @@ async function selectPair() {
 
 test("season/source copy is accurate and branding has no placeholder contact or dead actions", async () => {
   render(<App />);
-  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("BY SEASON");
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("PitchStats");
   await waitFor(() => expect(screen.getByRole("button", { name: "Refresh seasons" })).toBeEnabled());
   expect(screen.getByText("DATA FROM API-SPORTS")).toBeInTheDocument();
   expect(screen.queryByText(/OPTA|heatmap|xG|Export Insights|support@|PL Compare/i)).not.toBeInTheDocument();
   expect(document.querySelector(".nav-actions")).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "GitHub repository" })).toHaveAttribute("href", "https://github.com/GKaz17/dv200-football-dashboard");
+});
+
+test("player chart colours stay consistent between comparison and timeline", () => {
+  const comparison = render(<MemoryRouter><ComparePage player1={first} player2={second} /></MemoryRouter>);
+  const colours = chart("bar").datasets.map((dataset) => dataset.borderColor);
+  expect(colours[0]).not.toBe(colours[1]);
+  expect(chart("radar").datasets.map((dataset) => dataset.borderColor)).toEqual(colours);
+  comparison.unmount();
+  render(<MemoryRouter><TimelinePage player1={first} player2={second} /></MemoryRouter>);
+  expect(chart("line").datasets.map((dataset) => dataset.borderColor)).toEqual(colours);
+  expect(chart("line").datasets[1].borderDash).not.toEqual([]);
 });
 
 test("independent seasons support the same player across years and clear stale selections", async () => {

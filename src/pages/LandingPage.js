@@ -2,7 +2,6 @@
 import { useState, useRef, useEffect, useId } from "react";
 import { useNavigate } from "react-router-dom";
 import { TbChartArrows } from "react-icons/tb";
-import { MdOutlineTimer, MdBarChart } from "react-icons/md";
 import { FaStar, FaSearch, FaRedo, FaTrash } from "react-icons/fa";
 import { GiSoccerBall } from "react-icons/gi";
 import { formatSeason, playerClub } from "../playerData";
@@ -322,19 +321,10 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
           DATA FROM API-SPORTS
         </div>
 
-        {/* Three-part title: white / blue-gradient / gold
-            Each part is a separate span so we can colour them independently */}
-        <h1 className="hero-title">
-          COMPARE THE BEST OF
-          <span className="hero-title-line2">
-            <span className="hero-the-pl">THE PL </span>
-            <span className="hero-2025">BY SEASON</span>
-          </span>
-        </h1>
+        <h1 className="hero-title">PitchStats</h1>
 
         <p className="hero-subtitle">
-          Analyze head-to-head performance metrics for your favorite Premier
-          League players across the seasons available through your API plan.
+          Premier League player comparison, season against season.
         </p>
       </section>
 
@@ -388,24 +378,6 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
           <TbChartArrows className="compare-btn-icon" />
           {bothLoaded ? "COMPARE PLAYERS" : "SELECT BOTH PLAYERS FIRST"}
         </button>
-      </section>
-
-      {/*  FEATURE HIGHLIGHTS  */}
-      <section className="features-section">
-        {[
-          { icon: <TbChartArrows />, title: "Season Statistics",
-            desc: "Compare available goals, assists, shots, passes and defensive totals across selected seasons." },
-          { icon: <MdOutlineTimer />, title: "Simulated Timeline",
-            desc: "Explore an illustrative progression based on season totals, not recorded match history." },
-          { icon: <MdBarChart />, title: "Head-to-Head Charts",
-            desc: "View pair-relative radar scores, raw totals and shares of combined goal contributions." },
-        ].map((f) => (
-          <div className="feature-item" key={f.title}>
-            <div className="feature-icon-wrap">{f.icon}</div>
-            <h3 className="feature-title">{f.title}</h3>
-            <p className="feature-desc">{f.desc}</p>
-          </div>
-        ))}
       </section>
 
     </div>

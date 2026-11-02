@@ -9,13 +9,11 @@ import {
 import { Line } from "react-chartjs-2";
 import { formatStat, playerMetrics, recordLabel, recordSeason, seasonSummary, simulatedTimeline } from "../playerData";
 import { historyRequestEstimate, loadMatchHistory } from "../matchHistory";
+import { PLAYER_COLORS, CHART_LABEL, CHART_GRID, CHART_TOOLTIP } from "../chartTheme";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Filler);
 
-const COLORS = [
-  { solid: "#3b82f6", faded: "rgba(59,130,246,0.12)" },
-  { solid: "#f59e0b", faded: "rgba(245,158,11,0.08)" },
-];
+const COLORS = PLAYER_COLORS;
 const STAT_OPTIONS = [
   { value: "goals", label: "Goals" }, { value: "assists", label: "Assists" },
   { value: "shots", label: "Shots" }, { value: "passes", label: "Passes" },
@@ -25,18 +23,15 @@ const lineOptions = {
   responsive: true, maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: {
-      backgroundColor: "#1e293b", borderColor: "#334155", borderWidth: 1,
-      titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
-    },
+    tooltip: CHART_TOOLTIP,
   },
   scales: {
-    x: { ticks: { color: "#94a3b8", font: { size: 11 } }, grid: { color: "rgba(255,255,255,0.04)" } },
+    x: { ticks: { color: CHART_LABEL, font: { size: 11 } }, grid: { color: CHART_GRID } },
     y: {
       beginAtZero: true,
-      title: { display: true, text: "Illustrative cumulative count", color: "#94a3b8" },
-      ticks: { color: "#94a3b8", precision: 0 },
-      grid: { color: "rgba(255,255,255,0.04)" },
+      title: { display: true, text: "Illustrative cumulative count", color: CHART_LABEL },
+      ticks: { color: CHART_LABEL, precision: 0 },
+      grid: { color: CHART_GRID },
     },
   },
 };
