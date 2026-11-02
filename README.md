@@ -59,11 +59,19 @@ Recorded matchweek overlays load only on request. They default to matchweeks 1â€
 
 Create React App embeds `REACT_APP_` values in the browser bundle. This configuration does not keep a provider key secret. A future server-side proxy would be needed for private credentials and central rate limits. `.gitignore` excludes local environment files; previously committed values still remain in Git history until separately addressed.
 
+### Player-name lookup
+
+API-SPORTS rejects three-character searches and can omit first/full-name matches even when a player has statistics. The lookup normalises accents and punctuation, tries valid provider searches, then uses a bundled names-and-club-hints catalogue for 2022/23-2024/25. For example, Eze, Eberechi, Eberechi Eze and E. Eze can resolve to the same provider player ID. Club discovery is capped at three clubs and four pages per club, with an overall 12-second timeout; broad first names ask for a more specific name.
+
+The catalogue contains 2,447 names-only entries from a pinned [Fantasy-Premier-League archive](https://github.com/vaastav/Fantasy-Premier-League/tree/d7b05b51d137bfefef4b692386d18c610975b9b9/data). It is not comparison data or proof of provider coverage. The app discovers the API player ID and fetches the selected season by that ID, retaining all same-season clubs after a transfer. Plan and quota failures remain visible. Outside the catalogue's seasons, provider and surname lookups still work, but name-only fallback coverage is limited.
+
+Regenerate the checked-in catalogue with `npm run update:player-directory`; the generator needs no sports-API key and `csv-parse` is development-only. It can use `-- --github-cli` for authenticated GitHub CLI downloads. The pinned source revision and season list are in `scripts/update-player-directory.cjs`. Archive attribution and its notice are retained in [player-directory-LICENSE.txt](public/player-directory-LICENSE.txt).
+
 ## Features
 
 | Feature | Implemented behaviour |
 | --- | --- |
-| Player search | Search API-SPORTS with loading, empty-result, error, timeout and retry states. |
+| Player search | First-name, full-name and short-surname fallback, with loading, empty-result, error, timeout and retry states. |
 | Head-to-head comparison | Compare goals, assists, shots, tackles, passes, dribbles and derived rates. |
 | Chart views | Radar, bar, pie and line charts; labels explain relative versus absolute scales. |
 | Data integrity | Missing fields display as `N/A`, rather than becoming a recorded zero. |
@@ -121,6 +129,8 @@ An unavailable numerator or denominator produces `null`, which the interface for
 | Feature descriptions implied unsupported analytics. | Matched copy to season totals, available fields and the simulated timeline. |
 
 The 2 November local functional checkpoint passed **23 regression tests**, a production build and desktop/mobile browser checks down to 320px. Browser chart checks used fixtures; a live Salah search also succeeded, although provider availability was intermittent. These results describe that checkpoint, not a new production availability guarantee.
+
+The 3 November name-search checkpoint passes **74 tests across six suites**, including short surnames, initials, first/full names, selected-season hydration, transferred players, pagination, cancellation, caching and quota errors. The production build also passes. The earlier 23-test result above is retained as historical evidence, not the current test count.
 
 To reproduce the automated checks:
 

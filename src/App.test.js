@@ -54,9 +54,9 @@ function search(label, query) {
 
 async function selectPair() {
   global.fetch.mockResolvedValueOnce(response([first])).mockResolvedValueOnce(response([second]));
-  search("Player A", "One");
+  search("Player A", "Player One");
   await screen.findByRole("heading", { name: "Player One" });
-  search("Player B", "Two");
+  search("Player B", "Player Two");
   await screen.findByRole("heading", { name: "Player Two" });
 }
 
@@ -81,6 +81,25 @@ test("player chart colours stay consistent between comparison and timeline", () 
   expect(chart("line").datasets[1].borderDash).not.toEqual([]);
 });
 
+test("short-surname discovery works through Search and retains the player through navbar routes", async () => {
+  const eze = { ...player(19586, "E. Eze"), player: { id: 19586, name: "E. Eze", firstname: "Eberechi Oluchi", lastname: "Eze" } };
+  global.fetch.mockImplementation(async (address) => {
+    const url = new URL(address);
+    if (url.pathname === "/teams") return response([{ team: { id: 52, name: "Crystal Palace", code: "CRY" } }]);
+    return response(url.searchParams.has("team") || url.searchParams.has("id") ? [eze] : [second]);
+  });
+  render(<App />);
+  search("Player A", "Eze");
+  await screen.findByRole("heading", { name: "E. Eze" });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Haaland" } });
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "COMPARE" }));
+  await screen.findByRole("heading", { name: "Player Comparison" });
+  expect(chart("bar").datasets[0].label).toContain("E. Eze");
+  fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
+  expect(screen.getByRole("heading", { name: "Simulated Season Timeline" })).toBeInTheDocument();
+  expect(chart("line").datasets[0].label).toContain("E. Eze");
+});
+
 test("independent seasons support the same player across years and clear stale selections", async () => {
   loadSeasonAvailability.mockResolvedValue({ all: [{ year: 2026 }, { year: 2024 }, { year: 2016 }], range: null, notice: "" });
   global.fetch.mockImplementation(async (url) => {
@@ -93,9 +112,9 @@ test("independent seasons support the same player across years and clear stale s
   render(<App />);
   await waitFor(() => expect(screen.getByRole("combobox", { name: "Player A season" })).toHaveValue("2026"));
   fireEvent.change(screen.getByRole("combobox", { name: "Player A season" }), { target: { value: "2016" } });
-  search("Player A", "One");
+  search("Player A", "Player One");
   await within(screen.getByRole("group", { name: "Player A" })).findByRole("heading", { name: "Player One" });
-  search("Player B", "One");
+  search("Player B", "Player One");
   await within(screen.getByRole("group", { name: "Player B" })).findByRole("heading", { name: "Player One" });
   fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "COMPARE" }));
   expect(chart("bar").datasets.map((item) => item.label)).toEqual(["Player One · 2016/17", "Player One · 2026/27"]);
@@ -119,7 +138,7 @@ test("changing season cancels an in-flight search and rejects the old-season res
   global.fetch.mockReturnValueOnce(new Promise((resolve) => { resolveOld = resolve; }));
   render(<App />);
   await waitFor(() => expect(screen.getByRole("button", { name: "Refresh seasons" })).toBeEnabled());
-  search("Player A", "One");
+  search("Player A", "Player One");
   fireEvent.change(screen.getByRole("combobox", { name: "Player A season" }), { target: { value: "2023" } });
   await act(async () => resolveOld(response([first])));
   expect(screen.queryByRole("heading", { name: "Player One" })).not.toBeInTheDocument();
@@ -186,10 +205,10 @@ test("an unavailable recorded series is named explicitly and is not replaced wit
 });
 
 test("navbar comparison resolves both typed names without requiring the lower compare button", async () => {
-  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "One" ? [first] : [second]));
+  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "Player One" ? [first] : [second]));
   render(<App />);
-  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
-  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "Player One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Player Two" } });
   fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "COMPARE" }));
   await screen.findByRole("heading", { name: "Player Comparison" });
   expect(chart("bar").datasets.map((item) => item.label)).toEqual(["Player One · 2024/25", "Player Two · 2024/25"]);
@@ -200,14 +219,14 @@ test("navbar comparison resolves both typed names without requiring the lower co
 test("a failed navbar lookup retains both drafts and the successfully resolved player", async () => {
   global.fetch.mockResolvedValueOnce(response([first])).mockResolvedValueOnce(response([]));
   render(<App />);
-  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
-  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "Player One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Player Two" } });
   fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("No Player B match");
   expect(screen.getByRole("heading", { name: "Player One" })).toBeInTheDocument();
-  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Player Two");
   expect(window.location.pathname).toBe("/");
-  expect(JSON.parse(window.localStorage.getItem(SELECTION_KEY)).selection.query2).toBe("Two");
+  expect(JSON.parse(window.localStorage.getItem(SELECTION_KEY)).selection.query2).toBe("Player Two");
 });
 
 test("saved cross-season records survive remounts and direct timeline routes without a new lookup", () => {
@@ -232,12 +251,12 @@ test("saved cross-season records survive remounts and direct timeline routes wit
 
 test("unselected search drafts persist and the timeline navbar can resolve them after remount", async () => {
   const view = render(<App />);
-  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
-  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "Player One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Player Two" } });
   view.unmount();
-  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "One" ? [first] : [second]));
+  global.fetch.mockImplementation(async (url) => response(new URL(url).searchParams.get("search") === "Player One" ? [first] : [second]));
   render(<App />);
-  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Player Two");
   fireEvent.click(within(screen.getByRole("navigation", { name: "Primary" })).getByRole("link", { name: "TIMELINE" }));
   await screen.findByRole("heading", { name: "Simulated Season Timeline" });
   expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(1);
@@ -260,8 +279,8 @@ test("choosing Home cancels a pending navbar lookup without a late redirect", as
   let resolve;
   global.fetch.mockReturnValueOnce(new Promise((done) => { resolve = done; }));
   render(<App />);
-  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "One" } });
-  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Two" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player A" }), { target: { value: "Player One" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Player B" }), { target: { value: "Player Two" } });
   const nav = within(screen.getByRole("navigation", { name: "Primary" }));
   fireEvent.click(nav.getByRole("link", { name: "COMPARE" }));
   expect(screen.getByText("Finding players...")).toBeInTheDocument();
@@ -269,7 +288,7 @@ test("choosing Home cancels a pending navbar lookup without a late redirect", as
   await act(async () => resolve(response([first])));
   expect(window.location.pathname).toBe("/");
   expect(screen.queryByRole("heading", { name: "Player Comparison" })).not.toBeInTheDocument();
-  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Two");
+  expect(screen.getByRole("textbox", { name: "Player B" })).toHaveValue("Player Two");
 });
 
 test("navbar and footer navigation keep the selected pair; timeline toggles never change points", async () => {
@@ -305,7 +324,7 @@ test("navbar and footer navigation keep the selected pair; timeline toggles neve
 test("network failure stops loading and retry succeeds", async () => {
   global.fetch.mockRejectedValueOnce(new TypeError("Network error")).mockResolvedValueOnce(response([first]));
   render(<App />);
-  const panel = search("Player A", "One");
+  const panel = search("Player A", "Player One");
   expect(await panel.findByRole("alert")).toHaveTextContent(/could not connect/);
   expect(panel.getByRole("button", { name: "Search Player A" })).toBeEnabled();
   fireEvent.click(panel.getByRole("button", { name: "Retry search" }));
@@ -327,8 +346,8 @@ test("a late response cannot replace a newer search result", async () => {
   global.fetch.mockReturnValueOnce(new Promise((resolve) => { resolveOld = resolve; }))
     .mockResolvedValueOnce(response([second]));
   render(<App />);
-  search("Player A", "One");
-  search("Player A", "Two");
+  search("Player A", "Player One");
+  search("Player A", "Player Two");
   await screen.findByRole("heading", { name: "Player Two" });
   await act(async () => resolveOld(response([first])));
   expect(screen.queryByRole("heading", { name: "Player One" })).not.toBeInTheDocument();
@@ -341,7 +360,7 @@ test("a stalled request times out, stops loading and offers retry", async () => 
     signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
   }));
   render(<App />);
-  const panel = search("Player A", "One");
+  const panel = search("Player A", "Player One");
   await act(async () => jest.advanceTimersByTime(12000));
   expect(panel.getByRole("alert")).toHaveTextContent(/timed out/);
   expect(panel.getByRole("button", { name: "Search Player A" })).toBeEnabled();

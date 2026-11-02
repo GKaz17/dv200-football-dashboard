@@ -106,3 +106,108 @@ test("successful searches are cached by query and season, while failures remain 
   await searchPlayers("Example", undefined, 2024);
   expect(global.fetch).toHaveBeenCalledTimes(2);
 });
+
+const apiResponse = (records, pages = 1) => ({ ok: true, json: async () => ({ response: records, errors: [], paging: { total: pages } }) });
+const ezeRecord = (year, extra = []) => ({
+  player: { id: 19586, name: "E. Eze", firstname: "Eberechi Oluchi", lastname: "Eze" },
+  statistics: [{ league: { id: 39, season: year }, team: { id: 52, name: "Crystal Palace" }, goals: { total: 8 } }, ...extra],
+});
+function mockEze({ rosterPage = 1, hydrated = null } = {}) {
+  global.fetch.mockImplementation(async (address) => {
+    const url = new URL(address), params = url.searchParams, year = Number(params.get("season"));
+    if (url.pathname === "/teams") return apiResponse([{ team: { id: 52, name: "Crystal Palace", code: "CRY" } }]);
+    if (params.has("id")) return apiResponse(hydrated ?? [ezeRecord(year)]);
+    if (params.has("team")) return Number(params.get("page")) === rosterPage ? apiResponse([ezeRecord(year)], rosterPage)
+      : apiResponse([{ player: { id: 1, name: "Other Player" }, statistics: [] }], rosterPage);
+    return apiResponse([]);
+  });
+}
+
+test.each(["Eze", "Eberechi", "Eberechi Eze", "E. Eze"])("resolves %s to live ID-based statistics without an invalid short-surname request", async (query) => {
+  mockEze();
+  const records = await searchPlayers(query);
+  expect(records).toHaveLength(1);
+  expect(records[0]).toMatchObject({ player: { id: 19586, name: "E. Eze" }, selectionSeason: 2024 });
+  const urls = global.fetch.mock.calls.map(([url]) => new URL(url));
+  expect(urls.some((url) => url.searchParams.get("id") === "19586")).toBe(true);
+  for (const url of urls.filter((url) => url.searchParams.has("search"))) {
+    expect(url.searchParams.get("search").length).toBeGreaterThanOrEqual(4);
+    expect(url.searchParams.get("search")).not.toMatch(/[.']/);
+  }
+});
+
+test("club discovery follows pagination and always fetches the complete selected-season record by ID", async () => {
+  const extra = { league: { id: 39, season: 2024 }, team: { id: 42 }, goals: { total: 2 } };
+  mockEze({ rosterPage: 2, hydrated: [ezeRecord(2024, [extra])] });
+  const records = await searchPlayers("Eze");
+  expect(global.fetch.mock.calls.some(([url]) => new URL(url).searchParams.get("page") === "2")).toBe(true);
+  expect(records[0].statistics).toHaveLength(2);
+});
+
+test("name-directory records cannot fabricate missing API statistics", async () => {
+  mockEze({ hydrated: [] });
+  await expect(searchPlayers("Eze")).resolves.toEqual([]);
+});
+
+test("ID hydration rejects mismatched season and league", async () => {
+  mockEze({ hydrated: [ezeRecord(2023)] });
+  await expect(searchPlayers("Eze", undefined, 2024)).resolves.toEqual([]);
+});
+
+test("fallback records and club hints are cached independently by requested season", async () => {
+  mockEze();
+  await searchPlayers("Eze", undefined, 2024);
+  const calls = global.fetch.mock.calls.length;
+  await searchPlayers("Eze", undefined, 2024);
+  expect(global.fetch).toHaveBeenCalledTimes(calls);
+  await searchPlayers("Eze", undefined, 2023);
+  expect(global.fetch.mock.calls.slice(calls).every(([url]) => new URL(url).searchParams.get("season") === "2023")).toBe(true);
+});
+
+test("full-name search can fall back to a searchable surname outside the bundled directory", async () => {
+  global.fetch.mockImplementation(async (address) => apiResponse(new URL(address).searchParams.get("search") === "Example" ? [
+    { player: { id: 1, name: "J. Example", firstname: "Jane", lastname: "Example" }, statistics: [{ league: { id: 39, season: 2016 } }] },
+    { player: { id: 2, name: "J. Example", firstname: "John", lastname: "Example" }, statistics: [{ league: { id: 39, season: 2016 } }] },
+  ] : []));
+  const rows = await searchPlayers("Jane Example", undefined, 2016);
+  expect(rows.map((record) => record.player.id)).toEqual([1]);
+});
+
+test("ambiguous first names request a more specific name before scanning clubs", async () => {
+  global.fetch.mockResolvedValue(apiResponse([]));
+  await expect(searchPlayers("Alex")).rejects.toThrow("first and last name");
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+});
+
+test("unknown short names fail with guidance rather than sending invalid provider requests", async () => {
+  await expect(searchPlayers("Zzx")).rejects.toThrow("full name");
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test("a quota failure is not hidden by a fallback request", async () => {
+  global.fetch.mockResolvedValue({ ok: false, status: 429 });
+  await expect(searchPlayers("Eberechi")).rejects.toThrow("limit");
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+});
+
+test("cancelled searches do not start discovery or read cached data", async () => {
+  mockEze();
+  await searchPlayers("Eze");
+  const calls = global.fetch.mock.calls.length;
+  const controller = new AbortController();
+  controller.abort();
+  await expect(searchPlayers("Eze", controller.signal)).rejects.toMatchObject({ name: "AbortError" });
+  expect(global.fetch).toHaveBeenCalledTimes(calls);
+});
+
+test("a multi-step lookup has one overall timeout, not a fresh wait for each discovery step", async () => {
+  jest.useFakeTimers();
+  global.fetch.mockImplementation((url, { signal }) => new Promise((resolve, reject) => {
+    signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+  }));
+  const pending = searchPlayers("Eze");
+  const assertion = expect(pending).rejects.toMatchObject({ kind: "timeout" });
+  jest.advanceTimersByTime(12000);
+  await assertion;
+  jest.useRealTimers();
+});
