@@ -140,7 +140,7 @@ Next I would add a server-side provider proxy, real fixture-level history, persi
 
 ## Credits and use terms
 
-- **Author and contact:** [Gedeon Kazadi](https://github.com/GKaz17) · [21100471@virtualwindow.co.za](mailto:21100471@virtualwindow.co.za)
+- **Author and contact:** [Gedeon Kazadi](https://github.com/GKaz17) · [gedeonkazadi017@yahoo.com](mailto:gedeonkazadi017@yahoo.com)
 - **Course:** Open Window DV200 football analytics brief.
 - **Libraries and scaffolding:** [React](https://react.dev/), [React Router](https://reactrouter.com/), [Create React App](https://create-react-app.dev/), [Chart.js](https://www.chartjs.org/), [react-chartjs-2](https://react-chartjs-2.js.org/) and [React Icons](https://react-icons.github.io/react-icons/). Dependency versions are recorded in the lockfile.
 - **Data and player imagery:** [API-SPORTS Football](https://www.api-football.com/); provider terms and third-party rights apply.
