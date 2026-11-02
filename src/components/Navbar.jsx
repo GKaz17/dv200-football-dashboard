@@ -1,12 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { 
   FaBars,
   FaHome,
   FaChartBar,
-  FaShareAlt,
-  FaCog,
   FaTimes
 } from "react-icons/fa";
 
@@ -14,20 +12,28 @@ import { GiSoccerBall } from "react-icons/gi";
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const toggleRef = useRef(null);
   const closeMenu = () => setMenuOpen(false);
 
   return (
 
-    <nav className={`navbar ${menuOpen ? "navbar--open" : ""}`}>
+    <nav aria-label="Primary" className={`navbar ${menuOpen ? "navbar--open" : ""}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && menuOpen) {
+          closeMenu();
+          toggleRef.current?.focus();
+        }
+      }}>
 
-      <div className="logo">
+      <Link className="logo" to="/" onClick={closeMenu} aria-label="PitchStats home">
         <GiSoccerBall />
         <span>PITCHSTATS</span>
-      </div>
+      </Link>
 
       <button
         className="nav-toggle"
         type="button"
+        ref={toggleRef}
         aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={menuOpen}
         aria-controls="primary-navigation"
@@ -68,10 +74,6 @@ function Navbar() {
 
       </ul>
 
-      <div className="nav-actions">
-        <FaShareAlt />
-        <FaCog />
-      </div>
 
     </nav>
 

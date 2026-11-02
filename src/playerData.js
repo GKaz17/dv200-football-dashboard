@@ -1,0 +1,57 @@
+export const LEAGUE_ID = 39;
+export const SEASON = 2024;
+export const SEASON_LABEL = "2024/25";
+
+export function statNumber(value) {
+  if (value == null || typeof value === "boolean" || String(value).trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+export function percentage(part, total) {
+  return part == null || total == null || total === 0
+    ? null
+    : Math.round((part / total) * 100);
+}
+
+export function playerMetrics(player) {
+  const stats = player?.statistics?.[0];
+  const goals = statNumber(stats?.goals?.total);
+  const assists = statNumber(stats?.goals?.assists);
+  const shots = statNumber(stats?.shots?.total);
+  const shotsOn = statNumber(stats?.shots?.on);
+  return {
+    goals,
+    assists,
+    shots,
+    passes: statNumber(stats?.passes?.total),
+    tackles: statNumber(stats?.tackles?.total),
+    dribbles: statNumber(stats?.dribbles?.success),
+    shotAccuracy: percentage(shotsOn, shots),
+    dribbleRate: percentage(statNumber(stats?.dribbles?.success), statNumber(stats?.dribbles?.attempts)),
+    contributions: goals == null || assists == null ? null : goals + assists,
+  };
+}
+
+export function relativePair(first, second) {
+  if (first == null || second == null) return [null, null];
+  const highest = Math.max(first, second);
+  return highest === 0 ? [0, 0] : [first / highest * 100, second / highest * 100];
+}
+
+export function formatStat(value, isPercent = false) {
+  return value == null ? "N/A" : `${value}${isPercent ? "%" : ""}`;
+}
+
+// A seeded illustration, not match history. Always monotonic and ending at the real total.
+export function simulatedTimeline(total, seed) {
+  if (total == null) return Array(10).fill(null);
+  let state = Array.from(String(seed)).reduce((hash, char) => (Math.imul(hash, 31) + char.charCodeAt(0)) >>> 0, 1);
+  let previous = 0;
+  return [0.05, 0.12, 0.22, 0.35, 0.46, 0.57, 0.68, 0.80, 0.92, 1].map((fraction, index) => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    const variation = (state / 4294967296 - 0.5) * 0.04;
+    previous = index === 9 ? total : Math.max(previous, Math.min(total, Math.round(total * (fraction + variation))));
+    return previous;
+  });
+}

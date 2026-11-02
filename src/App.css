@@ -12,6 +12,8 @@
 }
 
 .logo {
+  text-decoration: none;
+  color: inherit;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -116,6 +118,7 @@
     border-radius: 12px;
     background: #0d1b2e;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
     transition: max-height 0.25s ease, margin-top 0.25s ease, padding 0.25s ease, opacity 0.2s ease, border-width 0.2s ease;
   }
@@ -126,6 +129,7 @@
     padding: 8px;
     border-width: 1px;
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
   }
 
@@ -188,7 +192,7 @@ h1 {
   margin: 0 auto;
 }
 
-/* "POWERED BY OPTA DATA" pill */
+/* Data source badge */
 .powered-badge {
   display: inline-flex;
   align-items: center;
@@ -217,7 +221,7 @@ h1 {
   margin-bottom: 20px;
 }
 
-/* "THE PL 2025" forced onto its own line */
+/* League and season share a line */
 .hero-title-line2 { display: block; }
 
 /* "THE PL" — blue gradient */
@@ -228,7 +232,7 @@ h1 {
   background-clip: text;
 }
 
-/* "2025" — gold */
+/* Season accent */
 .hero-2025 {
   color: #c9a84c;
   -webkit-text-fill-color: #c9a84c;
@@ -474,8 +478,13 @@ h1 {
   box-shadow: 0 12px 32px rgba(0,0,0,0.6);
 }
 
-.suggestion-list li {
+.suggestion-list button {
   display: flex;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
@@ -483,7 +492,36 @@ h1 {
   transition: background 0.15s;
 }
 
-.suggestion-list li:hover { background: #334155; }
+.suggestion-list button:hover,
+.suggestion-list button:focus-visible { background: #334155; }
+
+.search-status,
+.data-note {
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: 0;
+  color: #b6c4d6;
+  overflow-wrap: anywhere;
+}
+
+.search-status { margin: 8px 0 0; }
+.search-status:empty { display: none; }
+.search-status[role="alert"] { color: #fca5a5; }
+.data-note { margin: 0 0 16px; }
+
+.search-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid #64748b;
+  border-radius: 6px;
+  background: transparent;
+  color: #f1f5f9;
+  cursor: pointer;
+}
 
 .suggestion-photo {
   width: 30px;
@@ -639,7 +677,7 @@ h1 {
     padding: 9px 10px;
   }
 
-  .suggestion-list li {
+  .suggestion-list button {
     gap: 8px;
     padding: 9px 10px;
   }
