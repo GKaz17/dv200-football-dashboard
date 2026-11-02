@@ -5,7 +5,7 @@ import { TbChartArrows } from "react-icons/tb";
 import { MdOutlineTimer, MdBarChart } from "react-icons/md";
 import { FaStar, FaSearch, FaRedo } from "react-icons/fa";
 import { GiSoccerBall } from "react-icons/gi";
-import { SEASON_LABEL } from "../playerData";
+import { formatSeason, playerClub } from "../playerData";
 import { searchPlayers } from "../playerSearch";
 
 // PLAYER PANEL
@@ -15,7 +15,7 @@ import { searchPlayers } from "../playerSearch";
 //   This is the key UX fix for same-name players — you can see at a glance
 //   which "Jones" or "Silva" you're picking.
 // 
-function PlayerPanel({ label, placeholder, player, onSelect }) {
+function PlayerPanel({ label, placeholder, player, onSelect, season, seasons, onSeasonChange, onAccessDenied, onSearchStart }) {
   const [query, setQuery]             = useState(player?.player?.name ?? "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading]         = useState(false);
@@ -28,6 +28,16 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
   const requestRef = useRef(0);
   const lastSearchRef = useRef(null);
   const inputId = useId();
+  const previousSeason = useRef(season);
+
+  useEffect(() => {
+    if (previousSeason.current === season) return;
+    previousSeason.current = season;
+    clearTimeout(debounceRef.current);
+    controllerRef.current?.abort();
+    requestRef.current += 1;
+    setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+  }, [season]);
 
   function cancelPendingSearch() {
     clearTimeout(debounceRef.current);
@@ -54,6 +64,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
 
   // Debounced autocomplete — waits 300ms after user stops typing 
   function handleChange(e) {
+    onSearchStart();
     const value = e.target.value;
     cancelPendingSearch();
     setQuery(value);
@@ -82,11 +93,12 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
     setNoResults(false);
     setSuggestions([]);
     try {
-      const results = await searchPlayers(value, controller.signal);
+      onSearchStart();
+      const results = await searchPlayers(value, controller.signal, season);
       if (request !== requestRef.current) return;
       if (results.length === 0) {
         setNoResults(true);
-        setStatus(`No players found for "${value.trim()}" in the ${SEASON_LABEL} Premier League dataset. Try another name.`);
+        setStatus(`No players found for "${value.trim()}" in the ${formatSeason(season)} Premier League dataset. Try another name or season.`);
       } else if (selectFirst) {
         pickSuggestion(results[0]);
       } else {
@@ -95,11 +107,12 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
       }
     } catch (failure) {
       if (request !== requestRef.current) return;
+      if (failure?.kind === "plan") onAccessDenied(failure);
       setError(controller.signal.aborted
         ? "The search timed out. Please retry."
         : failure instanceof TypeError || failure instanceof SyntaxError
           ? "Player search could not connect. Please check your connection and retry."
-          : failure.message || "Player search failed. Please retry.");
+          : failure?.message || "Player search failed. Please retry.");
     } finally {
       clearTimeout(timeout);
       if (request === requestRef.current) setLoading(false);
@@ -112,7 +125,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
   }
 
   function handleSearch() {
-    if (query.trim().length < 3) return;
+    if (query.trim().length < 3 || !seasons.some((item) => item.year === season)) return;
     runSearch(query, true);
   }
 
@@ -140,6 +153,18 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
         <label className="panel-label" htmlFor={inputId}>{label}</label>
         {/* Show a small "Selected" indicator when a player is chosen */}
         {player && <span className="panel-selected-tag">✓ Selected</span>}
+      </div>
+
+      <div className="season-field">
+        <label htmlFor={`${inputId}-season`}>Season</label>
+        <select id={`${inputId}-season`} aria-label={`${label} season`} value={season}
+          disabled={!seasons.length} onChange={(event) => {
+            cancelPendingSearch();
+            setQuery(""); setSuggestions([]); setLoading(false); setStatus(""); setError(""); setNoResults(false);
+            onSeasonChange(Number(event.target.value));
+          }}>
+          {seasons.map((item) => <option key={item.year} value={item.year}>{formatSeason(item.year)}{item.current ? " (current)" : ""}</option>)}
+        </select>
       </div>
 
       {/*  Image and info area 
@@ -171,7 +196,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
                 />
               )}
               <span className="panel-club-name">
-                {stats?.team?.name ?? "—"}
+                {playerClub(player)}
               </span>
             </div>
 
@@ -198,6 +223,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
           <input
             id={inputId}
             type="text"
+            disabled={!seasons.length}
             autoComplete="off"
             aria-describedby={`${inputId}-status`}
             className="panel-input"
@@ -211,7 +237,7 @@ function PlayerPanel({ label, placeholder, player, onSelect }) {
             className="panel-search-btn"
             aria-label={`Search ${label}`}
             onClick={handleSearch}
-            disabled={loading || query.trim().length < 3}
+            disabled={loading || !seasons.length || query.trim().length < 3}
           >
             <FaSearch aria-hidden="true" /> {loading ? "Searching..." : "Search"}
           </button>
@@ -266,7 +292,9 @@ function positionClass(pos) {
  
 // MAIN PAGE
  
-function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2 }) {
+function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2,
+  season1, season2, seasons, availability, seasonLoading, seasonError, onRetrySeasons,
+  onSeasonChange, onAccessDenied, onSearchStart }) {
   const navigate   = useNavigate();
   const bothLoaded = player1 && player2;
 
@@ -291,15 +319,24 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2 }) {
           COMPARE THE BEST OF
           <span className="hero-title-line2">
             <span className="hero-the-pl">THE PL </span>
-            <span className="hero-2025">{SEASON_LABEL}</span>
+            <span className="hero-2025">BY SEASON</span>
           </span>
         </h1>
 
         <p className="hero-subtitle">
           Analyze head-to-head performance metrics for your favorite Premier
-          League players using {SEASON_LABEL} season totals.
+          League players across the seasons available through your API plan.
         </p>
       </section>
+
+      <div className="season-availability">
+        <p className="data-note" role="status">{seasonLoading ? "Checking Premier League season availability..." : availability.notice || "Player-season coverage is supplied by API-SPORTS. Available years depend on coverage and your API plan."}</p>
+        {seasonError && <p className="data-note" role="alert">{seasonError}</p>}
+        {!seasons.length && <p className="data-note" role="alert">No covered player seasons are accessible within your current plan and the 2016/17-or-later range.</p>}
+        <button className="search-retry" type="button" onClick={onRetrySeasons} disabled={seasonLoading}>
+          <FaRedo aria-hidden="true" /> Refresh seasons
+        </button>
+      </div>
 
       {/*  PLAYER SELECTION  */}
       <section className="selection-section">
@@ -309,6 +346,8 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2 }) {
           placeholder="Search Player A (e.g. Haaland)..."
           player={player1}
           onSelect={onSelectPlayer1}
+          season={season1} seasons={seasons} onSeasonChange={(year) => onSeasonChange(1, year)}
+          onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />
 
         {/* VS badge: filled circle between the two panels */}
@@ -319,6 +358,8 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2 }) {
           placeholder="Search Player B (e.g. Salah)..."
           player={player2}
           onSelect={onSelectPlayer2}
+          season={season2} seasons={seasons} onSeasonChange={(year) => onSeasonChange(2, year)}
+          onAccessDenied={onAccessDenied} onSearchStart={onSearchStart}
         />
 
       </section>
@@ -339,7 +380,7 @@ function LandingPage({ player1, player2, onSelectPlayer1, onSelectPlayer2 }) {
       <section className="features-section">
         {[
           { icon: <TbChartArrows />, title: "Season Statistics",
-            desc: `Compare available goals, assists, shots, passes and defensive totals for ${SEASON_LABEL}.` },
+            desc: "Compare available goals, assists, shots, passes and defensive totals across selected seasons." },
           { icon: <MdOutlineTimer />, title: "Simulated Timeline",
             desc: "Explore an illustrative progression based on season totals, not recorded match history." },
           { icon: <MdBarChart />, title: "Head-to-Head Charts",

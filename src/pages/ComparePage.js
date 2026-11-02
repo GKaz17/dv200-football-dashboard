@@ -4,7 +4,7 @@ import {
   ArcElement, RadialLinearScale, PointElement, LineElement,
 } from "chart.js";
 import { Bar, Pie, Radar } from "react-chartjs-2";
-import { formatStat, playerMetrics, relativePair, SEASON_LABEL } from "../playerData";
+import { formatStat, playerMetrics, relativePair, formatSeason, recordSeason, recordLabel, seasonSummary, playerClub } from "../playerData";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend,
   ArcElement, RadialLinearScale, PointElement, LineElement);
@@ -86,10 +86,11 @@ function PlayerHeader({ player, side }) {
     <div className="player-header-card">
       <div className={`header-photo-ring header-photo-ring--${side}`}>
         <img src={info.photo} alt={info.name} className="header-photo" />
+        {stats?.team?.logo && <img src={stats.team.logo} alt="" className="header-club-badge" />}
       </div>
-      {stats?.team?.logo && <img src={stats.team.logo} alt="" className="header-club-badge" />}
       <h2 className={`header-name header-name--${side}`}>{info.name}</h2>
-      <p className="header-sub">{stats?.team?.name ?? "Club unavailable"} {stats?.games?.position ?? ""}</p>
+      <p className="header-sub">{playerClub(player)} {stats?.games?.position ?? ""}</p>
+      <p className="header-sub">{formatSeason(recordSeason(player))}</p>
     </div>
   );
 }
@@ -105,7 +106,8 @@ function ComparePage({ player1, player2 }) {
     );
   }
   const metrics = [playerMetrics(player1), playerMetrics(player2)];
-  const names = [player1.player.name, player2.player.name];
+  const names = [recordLabel(player1), recordLabel(player2)];
+  const seasons = seasonSummary([player1, player2]);
   const colors = [C1, C2];
   const pairs = RADAR_METRICS.map(([key]) => relativePair(metrics[0][key], metrics[1][key]));
   const radarData = {
@@ -147,7 +149,7 @@ function ComparePage({ player1, player2 }) {
         <PlayerHeader player={player2} side="p2" />
       </section>
       <section className="chart-section">
-        <p className="chart-label">Pair-relative comparison · {SEASON_LABEL}</p>
+        <p className="chart-label">Pair-relative comparison · {seasons}</p>
         <p className="data-note">
           Each radar axis is relative to these two players: the higher season total is 100,
           and the other is a percentage of it. Both zero totals score 0. This is not a league
@@ -158,12 +160,13 @@ function ComparePage({ player1, player2 }) {
         </div>
       </section>
       <section className="stat-bars-section">
-        <p className="section-label">Head to Head · {SEASON_LABEL} totals</p>
+        <p className="section-label">Head to Head · {seasons} totals</p>
         <p className="data-note">
           N/A means unavailable, or no attempts for a rate; 0 means a recorded zero.
           The blue bar shows Player A's share of the two displayed values, not a rating.
           Bars are left empty when data is missing or both values are zero.
           Shot accuracy is shots on target divided by total shots.
+          Totals are not adjusted per appearance or per 90 minutes; an ongoing season may have fewer matches.
         </p>
         {RADAR_METRICS.map(([key, label]) => (
           <StatBar key={key} label={label} val1={metrics[0][key]} val2={metrics[1][key]} />
@@ -195,7 +198,7 @@ function ComparePage({ player1, player2 }) {
       </section>
       <div className="compare-actions">
         <button className="action-btn action-btn--secondary" onClick={() => navigate("/")}>Change Players</button>
-        <button className="action-btn action-btn--primary" onClick={() => navigate("/timeline")}>View Simulated Timeline</button>
+        <button className="action-btn action-btn--primary" onClick={() => navigate("/timeline")}>View Season Overlays</button>
       </div>
     </div>
   );

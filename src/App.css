@@ -523,6 +523,22 @@ h1 {
   cursor: pointer;
 }
 
+.season-availability { width: min(calc(100% - 32px), 860px); margin: 0 auto 24px; }
+.season-field { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+.season-field label { color: #b6c4d6; font-size: 13px; }
+.season-field select { min-width: 0; flex: 1; padding: 9px; color: #f1f5f9; background: #1a2840; border: 1px solid #334155; border-radius: 6px; }
+.timeline-source { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 0 0 16px; padding: 12px; border: 1px solid #334155; border-radius: 6px; color: #b6c4d6; }
+.timeline-source legend { font-size: 13px; padding: 0 4px; }
+.timeline-source label { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.history-controls { margin-bottom: 16px; }
+.history-controls .search-retry { margin: 0 8px 8px 0; }
+.matchweek-window { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.matchweek-window label { display: flex; flex-direction: column; gap: 6px; color: #b6c4d6; font-size: 13px; }
+.matchweek-window input { width: 120px; max-width: 100%; padding: 8px; border: 1px solid #334155; border-radius: 6px; color: #f1f5f9; background: #1a2840; }
+.budget-approval { display: flex; gap: 8px; align-items: flex-start; color: #b6c4d6; font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+.player-pill { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.comp-stat-name { white-space: normal; overflow-wrap: anywhere; }
+
 .suggestion-photo {
   width: 30px;
   height: 30px;
@@ -884,8 +900,8 @@ color:white;
 /* Club badge — small logo overlaid bottom-right of the photo ring. */
 .header-club-badge {
   position: absolute;
-  bottom: 52px; /* sits at the bottom-right of the photo ring */
-  right: 28px;
+  bottom: -2px;
+  right: -2px;
   width: 28px;
   height: 28px;
   object-fit: contain;
@@ -1149,8 +1165,6 @@ color:white;
   }
 
   .header-club-badge {
-    bottom: 48px;
-    right: calc(50% - 48px);
     width: 24px;
     height: 24px;
   }

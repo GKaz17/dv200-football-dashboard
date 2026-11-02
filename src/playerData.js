@@ -1,6 +1,12 @@
 export const LEAGUE_ID = 39;
+export const MIN_SEASON = 2016;
 export const SEASON = 2024;
-export const SEASON_LABEL = "2024/25";
+export function formatSeason(year) { return `${year}/${String(Number(year) + 1).slice(-2)}`; }
+export const SEASON_LABEL = formatSeason(SEASON);
+export function recordSeason(player) { return player?.selectionSeason ?? player?.statistics?.[0]?.league?.season ?? SEASON; }
+export function recordLabel(player) { return `${player.player.name} · ${formatSeason(recordSeason(player))}`; }
+export function seasonSummary(players) { return [...new Set(players.map((player) => formatSeason(recordSeason(player))))].join(" vs "); }
+export function playerClub(player) { return [...new Set((player.statistics ?? []).map((stats) => stats.team?.name).filter(Boolean))].join(" / ") || "Club unavailable"; }
 
 export function statNumber(value) {
   if (value == null || typeof value === "boolean" || String(value).trim() === "") return null;
@@ -15,20 +21,24 @@ export function percentage(part, total) {
 }
 
 export function playerMetrics(player) {
-  const stats = player?.statistics?.[0];
-  const goals = statNumber(stats?.goals?.total);
-  const assists = statNumber(stats?.goals?.assists);
-  const shots = statNumber(stats?.shots?.total);
-  const shotsOn = statNumber(stats?.shots?.on);
+  const records = player?.statistics ?? [];
+  const sum = (group, key) => {
+    const numbers = records.map((stats) => statNumber(stats?.[group]?.[key]));
+    return !numbers.length || numbers.some((value) => value == null) ? null : numbers.reduce((total, value) => total + value, 0);
+  };
+  const goals = sum("goals", "total");
+  const assists = sum("goals", "assists");
+  const shots = sum("shots", "total");
+  const shotsOn = sum("shots", "on");
   return {
     goals,
     assists,
     shots,
-    passes: statNumber(stats?.passes?.total),
-    tackles: statNumber(stats?.tackles?.total),
-    dribbles: statNumber(stats?.dribbles?.success),
+    passes: sum("passes", "total"),
+    tackles: sum("tackles", "total"),
+    dribbles: sum("dribbles", "success"),
     shotAccuracy: percentage(shotsOn, shots),
-    dribbleRate: percentage(statNumber(stats?.dribbles?.success), statNumber(stats?.dribbles?.attempts)),
+    dribbleRate: percentage(sum("dribbles", "success"), sum("dribbles", "attempts")),
     contributions: goals == null || assists == null ? null : goals + assists,
   };
 }
