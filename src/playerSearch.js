@@ -15,9 +15,10 @@ export function planRange(errors) {
 }
 
 const cache = new Map();
+const lookupCache = new Map();
 let batchFixtures = true;
 export function canBatchFixtures() { return batchFixtures; }
-export function clearFootballCache() { cache.clear(); batchFixtures = true; }
+export function clearFootballCache() { cache.clear(); lookupCache.clear(); batchFixtures = true; }
 
 export async function footballRequest(endpoint, signal, ttl = 300000) {
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
@@ -78,7 +79,15 @@ export async function searchPlayers(query, signal, season = SEASON) {
   if (signal?.aborted) abort();
   signal?.addEventListener("abort", abort, { once: true });
   const deadline = setTimeout(abort, 12000);
-  try { return await resolvePlayers(query, controller.signal, season); }
+  try {
+    if (controller.signal.aborted) throw new DOMException("Aborted", "AbortError");
+    const key = `${Number(season)}:${normalizeName(query)}`;
+    const cached = lookupCache.get(key);
+    if (process.env.REACT_APP_API_SPORTS_KEY && cached?.expires > Date.now()) return cached.data;
+    const records = await resolvePlayers(query, controller.signal, season);
+    if (records.length && !controller.signal.aborted) lookupCache.set(key, { data: records, expires: Date.now() + 300000 });
+    return records;
+  }
   catch (error) {
     if (controller.signal.aborted && !signal?.aborted) throw new FootballApiError("The player lookup timed out. Please retry.", "timeout");
     throw error;

@@ -211,3 +211,41 @@ test("a multi-step lookup has one overall timeout, not a fresh wait for each dis
   await assertion;
   jest.useRealTimers();
 });
+
+test.each(["Odegaard", "\u00d8degaard", "Martin Odegaard", "Martin \u00d8degaard"])(
+  "%s resolves through directory and ID lookup without altering the provider's displayed name", async (query) => {
+    const record = { player: { id: 37127, name: "M. \u00d8degaard", firstname: "Martin", lastname: "\u00d8degaard" },
+      statistics: [{ league: { id: 39, season: 2024 }, team: { id: 42, name: "Arsenal" }, goals: { total: 3, assists: 8 } }] };
+    global.fetch.mockImplementation(async (address) => {
+      const url = new URL(address);
+      if (url.pathname === "/teams") return apiResponse([{ team: { id: 42, name: "Arsenal", code: "ARS" } }]);
+      return apiResponse(url.searchParams.has("team") || url.searchParams.has("id") ? [record] : []);
+    });
+    const rows = await searchPlayers(query);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].player.name).toBe("M. \u00d8degaard");
+    expect(rows[0].player.id).toBe(37127);
+    const queries = global.fetch.mock.calls.map(([url]) => new URL(url).searchParams.get("search")).filter(Boolean);
+    expect(queries.length).toBeGreaterThan(0);
+    expect(queries.every((name) => /^[a-z0-9 ]+$/i.test(name) && /Odegaard/.test(name))).toBe(true);
+  },
+);
+
+test("equivalent accent spellings reuse a successful lookup but do not leak across seasons", async () => {
+  const record = (year) => ({ player: { id: 37127, name: "M. \u00d8degaard", firstname: "Martin", lastname: "\u00d8degaard" },
+    statistics: [{ league: { id: 39, season: year }, team: { id: 42 } }] });
+  global.fetch.mockImplementation(async (address) => {
+    const url = new URL(address), year = Number(url.searchParams.get("season"));
+    if (url.pathname === "/teams") return apiResponse([{ team: { id: 42, name: "Arsenal", code: "ARS" } }]);
+    return apiResponse(url.searchParams.has("team") || url.searchParams.has("id") ? [record(year)] : []);
+  });
+  await searchPlayers("Odegaard", undefined, 2024);
+  const calls = global.fetch.mock.calls.length;
+  await searchPlayers("\u00d8degaard", undefined, 2024);
+  expect(global.fetch).toHaveBeenCalledTimes(calls);
+  await searchPlayers("\u00d8degaard", undefined, 2023);
+  expect(global.fetch.mock.calls.length).toBeGreaterThan(calls);
+  clearFootballCache();
+  await searchPlayers("Odegaard", undefined, 2024);
+  expect(global.fetch.mock.calls.length).toBeGreaterThan(calls + 1);
+});

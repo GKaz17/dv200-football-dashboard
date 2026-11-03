@@ -9,8 +9,12 @@ import { saveSelection, SELECTION_KEY } from "./selectionStorage";
 
 jest.mock("./playerSearch", () => ({ ...jest.requireActual("./playerSearch"), loadSeasonAvailability: jest.fn() }));
 
+const mockChartOptions = {};
 jest.mock("react-chartjs-2", () => ({
-  Radar: ({ data }) => <div data-testid="radar" data-chart={JSON.stringify(data)} />,
+  Radar: ({ data, options }) => {
+    mockChartOptions.radar = options;
+    return <div data-testid="radar" data-chart={JSON.stringify(data)} />;
+  },
   Bar: ({ data }) => <div data-testid="bar" data-chart={JSON.stringify(data)} />,
   Pie: ({ data }) => <div data-testid="pie" data-chart={JSON.stringify(data)} />,
   Line: ({ data }) => <div data-testid="line" data-chart={JSON.stringify(data)} />,
@@ -79,6 +83,44 @@ test("player chart colours stay consistent between comparison and timeline", () 
   render(<MemoryRouter><TimelinePage player1={first} player2={second} /></MemoryRouter>);
   expect(chart("line").datasets.map((dataset) => dataset.borderColor)).toEqual(colours);
   expect(chart("line").datasets[1].borderDash).not.toEqual([]);
+});
+
+test("radar scores and raw totals stay aligned after unavailable metrics are removed", () => {
+  render(<MemoryRouter><ComparePage player1={first} player2={second} /></MemoryRouter>);
+  const radar = chart("radar");
+  expect(radar.labels).toEqual(["Goals", "Shots", "Passes", "Successful dribbles"]);
+  expect(radar.datasets[0].seasonTotals).toEqual([10, 20, 100, 4]);
+  expect(radar.datasets[1].seasonTotals).toEqual([0, 20, 100, 4]);
+  expect(radar.datasets[0].data).toEqual([100, 100, 100, 100]);
+  expect(radar.datasets[1].data).toEqual([0, 100, 100, 100]);
+  expect(screen.getByText(/Unavailable for one or both records/)).toHaveTextContent("Assists, Tackles");
+  const context = { dataset: radar.datasets[1], dataIndex: 0, raw: radar.datasets[1].data[0] };
+  expect(mockChartOptions.radar.plugins.tooltip.callbacks.label(context)).toEqual(["Player Two \u00b7 2024/25", "Season total: 0"]);
+  expect(mockChartOptions.radar.plugins.tooltip.callbacks.afterLabel(context)).toMatch(/^0\.0 \/ 100/);
+});
+
+test("radar uses complete transferred-player season totals, not just the first club", () => {
+  const earlier = { ...first, selectionSeason: 2023, statistics: [
+    { ...first.statistics[0], league: { id: 39, season: 2023 }, goals: { total: 2, assists: 1 } },
+    { ...first.statistics[0], league: { id: 39, season: 2023 }, team: { id: 20 }, goals: { total: 3, assists: 2 } },
+  ] };
+  const later = { ...second, statistics: [{ ...second.statistics[0], goals: { total: 10, assists: 6 } }] };
+  render(<MemoryRouter><ComparePage player1={earlier} player2={later} /></MemoryRouter>);
+  const radar = chart("radar"), goals = radar.labels.indexOf("Goals"), assists = radar.labels.indexOf("Assists");
+  expect(radar.datasets[0].seasonTotals[goals]).toBe(5);
+  expect(radar.datasets[0].data[goals]).toBe(50);
+  expect(radar.datasets[0].seasonTotals[assists]).toBe(3);
+  expect(radar.datasets[0].data[assists]).toBe(50);
+  expect(radar.datasets[0].label).toContain("2023/24");
+  expect(radar.datasets[1].label).toContain("2024/25");
+});
+
+test("a radar is withheld when fewer than three statistics can be compared", () => {
+  const limited = { ...second, statistics: [{ ...second.statistics[0], passes: { total: null }, dribbles: { success: null } }] };
+  render(<MemoryRouter><ComparePage player1={first} player2={limited} /></MemoryRouter>);
+  expect(screen.queryByTestId("radar")).not.toBeInTheDocument();
+  expect(screen.getByText(/Not enough comparable statistics for a radar/)).toBeInTheDocument();
+  expect(chart("bar").datasets[0].data[0]).toBe(10);
 });
 
 test("short-surname discovery works through Search and retains the player through navbar routes", async () => {
@@ -298,7 +340,8 @@ test("navbar and footer navigation keep the selected pair; timeline toggles neve
   fireEvent.click(nav.getByRole("link", { name: "COMPARE" }));
   expect(screen.getByRole("heading", { name: "Player Comparison" })).toBeInTheDocument();
   expect(chart("bar").datasets[1].data).toEqual([0, null, 20, null]);
-  expect(chart("radar").datasets[0].data[1]).toBeNull();
+  expect(chart("radar").labels).not.toContain("Assists");
+  expect(chart("radar").labels).not.toContain("Tackles");
   expect(screen.queryByTestId("pie")).not.toBeInTheDocument();
   expect(screen.getByText(/share cannot be calculated/i)).toBeInTheDocument();
 

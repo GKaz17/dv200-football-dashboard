@@ -34,7 +34,8 @@ const radarOptions = {
     tooltip: {
       ...tooltip,
       callbacks: {
-        label: (context) => `${context.dataset.label}: ${Number(context.raw).toFixed(1)} / 100 (pair-relative)`,
+        label: (context) => [context.dataset.label, `Season total: ${formatStat(context.dataset.seasonTotals?.[context.dataIndex])}`],
+        afterLabel: (context) => `${Number(context.raw).toFixed(1)} / 100 (pair-relative)`,
       },
     },
   },
@@ -106,11 +107,14 @@ function ComparePage({ player1, player2 }) {
   const names = [recordLabel(player1), recordLabel(player2)];
   const seasons = seasonSummary([player1, player2]);
   const colors = [C1, C2];
-  const pairs = RADAR_METRICS.map(([key]) => relativePair(metrics[0][key], metrics[1][key]));
+  const comparableMetrics = RADAR_METRICS.filter(([key]) => metrics.every((stats) => stats[key] != null));
+  const unavailableMetrics = RADAR_METRICS.filter(([key]) => metrics.some((stats) => stats[key] == null));
+  const pairs = comparableMetrics.map(([key]) => relativePair(metrics[0][key], metrics[1][key]));
   const radarData = {
-    labels: RADAR_METRICS.map(([, label]) => label),
-    datasets: metrics.map((_, index) => ({
+    labels: comparableMetrics.map(([, label]) => label),
+    datasets: metrics.map((stats, index) => ({
       label: names[index], data: pairs.map((pair) => pair[index]),
+      seasonTotals: comparableMetrics.map(([key]) => stats[key]),
       backgroundColor: colors[index].faded, borderColor: colors[index].border,
       pointBackgroundColor: colors[index].solid, borderWidth: 2, spanGaps: false,
     })),
@@ -152,9 +156,14 @@ function ComparePage({ player1, player2 }) {
           and the other is a percentage of it. Both zero totals score 0. This is not a league
           ranking or a player rating. An axis is omitted if either total is unavailable.
         </p>
-        <div className="chart-inner chart-inner--radar">
+        {unavailableMetrics.length > 0 && <p className="data-note" role="status">
+          Unavailable for one or both records: {unavailableMetrics.map(([, label]) => label).join(", ")}.
+        </p>}
+        {comparableMetrics.length >= 3 ? <div className="chart-inner chart-inner--radar">
           <Radar data={radarData} options={radarOptions} role="img" aria-label="Pair-relative radar comparison" />
-        </div>
+        </div> : <p className="data-note" role="status">
+          Not enough comparable statistics for a radar: at least three known metrics are required.
+        </p>}
       </section>
       <section className="stat-bars-section">
         <p className="section-label">Head to Head · {seasons} totals</p>

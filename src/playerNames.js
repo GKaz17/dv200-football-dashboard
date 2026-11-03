@@ -1,7 +1,18 @@
 import directory from "./playerDirectory.json";
 
+// These Latin letters do not decompose into an ASCII base letter under NFD.
+const LATIN_FOLD = {
+  "\u00c6": "AE", "\u00e6": "ae", "\u00d8": "O", "\u00f8": "o",
+  "\u0141": "L", "\u0142": "l", "\u0110": "D", "\u0111": "d",
+  "\u00d0": "D", "\u00f0": "d", "\u00de": "Th", "\u00fe": "th",
+  "\u0152": "OE", "\u0153": "oe", "\u00df": "ss", "\u1e9e": "SS",
+  "\u0126": "H", "\u0127": "h", "\u0131": "i", "\u014a": "N", "\u014b": "n",
+};
+const LATIN_FOLD_PATTERN = new RegExp(`[${Object.keys(LATIN_FOLD).join("")}]`, "g");
+
 export function cleanName(value) {
   return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(LATIN_FOLD_PATTERN, (letter) => LATIN_FOLD[letter])
     .replace(/['\u2019]/g, "").replace(/[^a-z0-9]+/gi, " ").trim();
 }
 

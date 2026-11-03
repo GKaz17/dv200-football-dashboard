@@ -67,6 +67,12 @@ The catalogue contains 2,447 names-only entries from a pinned [Fantasy-Premier-L
 
 Regenerate the checked-in catalogue with `npm run update:player-directory`; the generator needs no sports-API key and `csv-parse` is development-only. It can use `-- --github-cli` for authenticated GitHub CLI downloads. The pinned source revision and season list are in `scripts/update-player-directory.cjs`. Archive attribution and its notice are retained in [player-directory-LICENSE.txt](public/player-directory-LICENSE.txt).
 
+Names containing common Latin letters that do not decompose under Unicode NFD, such as Ø (O with stroke) and Ł (L with stroke), are explicitly folded for lookup. Both `Odegaard` and `Ødegaard` match the same directory identity; displayed names retain the provider's original spelling. Successful resolved queries are cached by normalised name and selected season for five minutes, so equivalent spellings do not repeat discovery requests. Failures are not cached.
+
+### Radar accuracy
+
+Radar axes use the two selected player-seasons' known totals: the higher total on each axis is 100 and the other is scaled against it. These are not raw counts, league percentiles or player ratings. Tooltips show the raw season total separately from its relative score. Metrics unavailable for either player are removed from the axes and listed; a radar is withheld if fewer than three metrics can be compared. Raw totals remain available below. Regression tests cover real zero, missing values, transfer aggregation and cross-season labels.
+
 ## Features
 
 | Feature | Implemented behaviour |
@@ -131,6 +137,8 @@ An unavailable numerator or denominator produces `null`, which the interface for
 The 2 November local functional checkpoint passed **23 regression tests**, a production build and desktop/mobile browser checks down to 320px. Browser chart checks used fixtures; a live Salah search also succeeded, although provider availability was intermittent. These results describe that checkpoint, not a new production availability guarantee.
 
 The 3 November name-search checkpoint passes **74 tests across six suites**, including short surnames, initials, first/full names, selected-season hydration, transferred players, pagination, cancellation, caching and quota errors. The production build also passes. The earlier 23-test result above is retained as historical evidence, not the current test count.
+
+The subsequent Latin-character and radar checkpoint passes **95 tests across the same six suites**. It adds non-decomposing Latin-letter matching, equivalent-spelling caching, radar score/raw-total alignment, unavailable-axis removal and the minimum-comparable-data guard.
 
 To reproduce the automated checks:
 
