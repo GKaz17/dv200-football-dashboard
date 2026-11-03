@@ -86,7 +86,7 @@ Radar axes use the two selected player-seasons' known totals: the higher total o
 | Recorded overlays | Real counts aligned by matchweek, with bounded windows, request estimates and a free-plan fallback. |
 | Navigation | One shared navbar and active-route indicator. Navbar and footer links resolve typed names and retain selected records. |
 | Saved comparison | Draft names, seasons and fresh selected records survive reloads in the same browser. A Clear comparison control removes the saved pair. |
-| Responsive interface | Desktop and mobile layouts with a collapsible navigation menu. |
+| Responsive interface | Collapsible navigation, earlier stacking for narrow search panels, wrapping name suggestions, touch-sized controls and readable chart layouts from phone to desktop. |
 
 ![PitchStats player search](docs/images/home.png)
 
@@ -139,6 +139,8 @@ The 2 November local functional checkpoint passed **23 regression tests**, a pro
 The 3 November name-search checkpoint passes **74 tests across six suites**, including short surnames, initials, first/full names, selected-season hydration, transferred players, pagination, cancellation, caching and quota errors. The production build also passes. The earlier 23-test result above is retained as historical evidence, not the current test count.
 
 The subsequent Latin-character and radar checkpoint passes **95 tests across the same six suites**. It adds non-decomposing Latin-letter matching, equivalent-spelling caching, radar score/raw-total alignment, unavailable-axis removal and the minimum-comparable-data guard.
+
+The responsive cleanup retains the same data calculations and blue glass identity. It removes conflicting chart sizing rules, increases usable mobile plotting space, wraps long player/club names and keeps search controls stable while loading. Browser fixture checks cover Home, Compare and both Timeline modes at 320, 360, 390, 640, 641, 720, 721, 760, 761, 768, 1024 and 1440px, plus short landscape and enlarged-text checks. These checks inspect individual element bounds, clipped text and rendered canvas pixels rather than hiding overflow at the page edge.
 
 To reproduce the automated checks:
 

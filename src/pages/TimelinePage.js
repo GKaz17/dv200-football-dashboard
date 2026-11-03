@@ -26,7 +26,7 @@ const lineOptions = {
     tooltip: CHART_TOOLTIP,
   },
   scales: {
-    x: { ticks: { color: CHART_LABEL, font: { size: 11 } }, grid: { color: CHART_GRID } },
+    x: { ticks: { color: CHART_LABEL, font: { size: 11 }, maxRotation: 0, maxTicksLimit: 6 }, grid: { color: CHART_GRID } },
     y: {
       beginAtZero: true,
       title: { display: true, text: "Illustrative cumulative count", color: CHART_LABEL },

@@ -42,8 +42,11 @@ const radarOptions = {
   scales: {
     r: {
       min: 0, max: 100,
-      ticks: { color: CHART_LABEL, stepSize: 25, backdropColor: "transparent" },
-      pointLabels: { color: CHART_LABEL, font: { size: 11 } },
+      ticks: { color: CHART_LABEL, stepSize: 50, backdropColor: "transparent" },
+      pointLabels: {
+        color: CHART_LABEL, font: { size: 11 },
+        callback: (label) => label === "Successful dribbles" ? ["Successful", "dribbles"] : label,
+      },
       grid: { color: CHART_GRID },
       angleLines: { color: CHART_GRID },
     },
